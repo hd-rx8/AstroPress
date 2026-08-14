@@ -29,3 +29,17 @@ export class WordPressRequestError extends Error {
     this.status = options.status;
   }
 }
+
+/**
+ * Raised when a paginated collection endpoint's first page (`page=1`) does
+ * not report a valid, positive integer `X-WP-TotalPages` — the value the
+ * aggregator relies on to know how many further pages to fetch.
+ */
+export class WordPressPaginationError extends Error {
+  constructor(operation: string, totalPages: unknown) {
+    super(
+      `WordPress ${operation} page 1 did not report a valid X-WP-TotalPages header (received: ${String(totalPages)})`,
+    );
+    this.name = 'WordPressPaginationError';
+  }
+}

@@ -64,6 +64,24 @@ export const pageWithoutExcerpt: WordPressRawPage = {
   content: { rendered: '<p>Reach out.</p>' },
 };
 
+/** A raw REST page whose slug collides with the reserved `/blog` root route. */
+export const pageWithReservedBlogSlug: WordPressRawPage = {
+  id: 200,
+  slug: 'blog',
+  date: '2026-01-03T09:00:00',
+  title: { rendered: 'Blog' },
+  content: { rendered: '<p>This should not exist as an editable page.</p>' },
+};
+
+/** A raw REST page whose slug collides with the reserved `/robots.txt` root route. */
+export const pageWithReservedRobotsSlug: WordPressRawPage = {
+  id: 201,
+  slug: 'robots.txt',
+  date: '2026-01-04T09:00:00',
+  title: { rendered: 'Robots' },
+  content: { rendered: '<p>This should not exist as an editable page.</p>' },
+};
+
 /** A raw REST post whose title/excerpt contain named and numeric HTML entities. */
 export const postWithEntities: WordPressRawPost = {
   id: 9,
