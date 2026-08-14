@@ -61,4 +61,32 @@ export function loadEnv(source: Record<string, string | undefined>): AppEnv {
   return { wordpressUrl, wordpressApiUrl, siteUrl };
 }
 
-export const env = loadEnv(import.meta.env);
+let cachedEnv: AppEnv | undefined;
+
+/**
+ * Lazily validates and caches `import.meta.env` on first property access,
+ * instead of eagerly at module import time.
+ *
+ * This makes merely *importing* this module side-effect-free: validation
+ * (and the fail-fast throw on a missing/invalid `WORDPRESS_URL`/`SITE_URL`)
+ * only happens the first time some code actually reads a property off
+ * `env`. Every real consumer (`client.ts`, `metadata.ts`,
+ * `robots.txt.ts`, ...) already only reads `env.<property>` when actually
+ * invoked, never at their own module's top level, so this is
+ * behavior-equivalent for the app itself — it still fails fast the moment
+ * any code needs a value.
+ *
+ * The reason this matters: `astro.config.ts` needs to reuse {@link loadEnv}
+ * (rather than hand-rolling its own `SITE_URL` validation) but is loaded by
+ * a separate, earlier Astro/Vite phase whose `import.meta.env` is never
+ * populated. An eagerly-computed `env` would make importing *anything* from
+ * this module — even just the `loadEnv` function — throw unconditionally in
+ * that context, regardless of real env vars actually being set. Deferring
+ * the computation until first property access avoids that entirely.
+ */
+export const env: AppEnv = new Proxy({} as AppEnv, {
+  get(_target, prop, receiver) {
+    cachedEnv ??= loadEnv(import.meta.env);
+    return Reflect.get(cachedEnv, prop, receiver);
+  },
+});
