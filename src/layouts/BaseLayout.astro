@@ -14,6 +14,15 @@ export interface Props {
 }
 
 const { metadata, jsonLd } = Astro.props;
+
+/**
+ * Escapes `<` so a `</script>` substring inside serialized JSON-LD data
+ * (e.g. from an editorial post title) can never close the script tag early
+ * and inject markup. Astro does not HTML-escape expression content placed
+ * inside a `<script>` tag — this is the standard mitigation for safely
+ * embedding JSON in a script element.
+ */
+const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : undefined;
 ---
 
 <html lang="en">
@@ -32,7 +41,7 @@ const { metadata, jsonLd } = Astro.props;
 
     <meta name="twitter:card" content={metadata.twitter.card} />
 
-    {jsonLd && <script type="application/ld+json" is:inline>{JSON.stringify(jsonLd)}</script>}
+    {jsonLdScript && <script type="application/ld+json" is:inline>{jsonLdScript}</script>}
   </head>
   <body>
     <header class="site-header">
