@@ -9,7 +9,7 @@ import { createWordPressClient } from './client';
 import { WordPressPaginationError } from './errors';
 import { normalizePage } from './normalizers';
 import type { Page } from './normalizers';
-import { WORDPRESS_API_PAGE_SIZE } from './posts';
+import { isValidTotalPages, WORDPRESS_API_PAGE_SIZE } from './pagination';
 import type { WordPressRawPage } from './types';
 
 const client = createWordPressClient();
@@ -32,10 +32,6 @@ export function assertNoReservedPageSlugs(pages: Page[]): void {
       throw new ReservedPageSlugError(page.slug);
     }
   }
-}
-
-function isValidTotalPages(value: number | undefined): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 1;
 }
 
 async function fetchAllRawPages(): Promise<WordPressRawPage[]> {

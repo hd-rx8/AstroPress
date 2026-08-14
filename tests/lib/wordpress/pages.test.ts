@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { normalizePage } from '../../../src/lib/wordpress/normalizers';
-import { WORDPRESS_API_PAGE_SIZE } from '../../../src/lib/wordpress/posts';
+import { WORDPRESS_API_PAGE_SIZE } from '../../../src/lib/wordpress/pagination';
 import {
   pageWithoutExcerpt,
   pageWithReservedBlogSlug,

@@ -15,19 +15,15 @@ import { createWordPressClient } from './client';
 import { WordPressPaginationError } from './errors';
 import { normalizePost } from './normalizers';
 import type { Post } from './normalizers';
+import { isValidTotalPages, WORDPRESS_API_PAGE_SIZE } from './pagination';
 import type { WordPressRawPost } from './types';
 
-/** `per_page` used when querying the WordPress REST API for posts/pages. */
-export const WORDPRESS_API_PAGE_SIZE = 100;
+export { WORDPRESS_API_PAGE_SIZE } from './pagination';
 
 /** Number of posts shown per page on the frontend blog index. */
 export const BLOG_PAGE_SIZE = 12;
 
 const client = createWordPressClient();
-
-function isValidTotalPages(value: number | undefined): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 1;
-}
 
 async function fetchAllRawPosts(): Promise<WordPressRawPost[]> {
   const first = await client.get<WordPressRawPost[]>('posts', {
