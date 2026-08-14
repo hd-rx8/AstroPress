@@ -63,3 +63,13 @@ export const pageWithoutExcerpt: WordPressRawPage = {
   title: { rendered: 'Contact' },
   content: { rendered: '<p>Reach out.</p>' },
 };
+
+/** A raw REST post whose title/excerpt contain named and numeric HTML entities. */
+export const postWithEntities: WordPressRawPost = {
+  id: 9,
+  slug: 'its-here',
+  date: '2026-01-08T09:00:00',
+  title: { rendered: 'It&#8217;s Here &amp; It&#8217;s &#8220;Great&#8221;' },
+  content: { rendered: '<p>Body.</p>' },
+  excerpt: { rendered: '<p>Rock &amp; roll &#8211; the sequel&hellip;</p>' },
+};

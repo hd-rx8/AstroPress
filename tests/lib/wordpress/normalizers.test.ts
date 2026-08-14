@@ -3,6 +3,7 @@ import { normalizePage, normalizePost } from '../../../src/lib/wordpress/normali
 import {
   pageWithoutExcerpt,
   postWithEmptyEmbeds,
+  postWithEntities,
   postWithoutEmbeddedData,
   wordpressPageFixture,
   wordpressPostFixture,
@@ -50,6 +51,13 @@ describe('normalizePost', () => {
   it('throws a contextual error when a required field is missing', () => {
     const invalid = { ...wordpressPostFixture, slug: undefined } as never;
     expect(() => normalizePost(invalid)).toThrow(/slug/i);
+  });
+
+  it('decodes named and numeric HTML entities in title and excerpt', () => {
+    expect(normalizePost(postWithEntities)).toMatchObject({
+      title: 'It’s Here & It’s “Great”',
+      excerpt: 'Rock & roll – the sequel…',
+    });
   });
 });
 

@@ -58,9 +58,42 @@ function collapseWhitespace(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
-/** Strips HTML tags, then collapses whitespace. */
+/**
+ * The named HTML entities WordPress commonly emits in `title.rendered` and
+ * `excerpt.rendered` (smart quotes, dashes, ampersands, etc.). Not an
+ * exhaustive HTML5 entity table — just the ones real WordPress content uses.
+ */
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  hellip: '…',
+  ndash: '–',
+  mdash: '—',
+  lsquo: '‘',
+  rsquo: '’',
+  ldquo: '“',
+  rdquo: '”',
+};
+
+/** Decodes named and numeric (decimal/hex) HTML entities, e.g. `&#8217;` -> `'`, `&amp;` -> `&`. */
+function decodeHtmlEntities(value: string): string {
+  return value.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);/g, (match, entity: string) => {
+    if (entity[0] === '#') {
+      const codePoint =
+        entity[1] === 'x' || entity[1] === 'X' ? parseInt(entity.slice(2), 16) : parseInt(entity.slice(1), 10);
+      return Number.isNaN(codePoint) ? match : String.fromCodePoint(codePoint);
+    }
+    return NAMED_ENTITIES[entity] ?? match;
+  });
+}
+
+/** Strips HTML tags, decodes entities, then collapses whitespace. */
 function stripHtml(value: string): string {
-  return collapseWhitespace(value.replace(/<[^>]*>/g, ' '));
+  return collapseWhitespace(decodeHtmlEntities(value.replace(/<[^>]*>/g, ' ')));
 }
 
 function requireField<T>(value: T | undefined | null, entity: string, field: string): T {
@@ -103,7 +136,7 @@ export function normalizePost(raw: WordPressRawPost): Post {
   const id = requireField(raw.id, 'post', 'id');
   const slug = requireField(raw.slug, 'post', 'slug');
   const date = requireField(raw.date, 'post', 'date');
-  const title = collapseWhitespace(requireField(raw.title?.rendered, 'post', 'title.rendered'));
+  const title = collapseWhitespace(decodeHtmlEntities(requireField(raw.title?.rendered, 'post', 'title.rendered')));
   const content = requireField(raw.content?.rendered, 'post', 'content.rendered');
 
   return {
@@ -123,7 +156,7 @@ export function normalizePage(raw: WordPressRawPage): Page {
   const id = requireField(raw.id, 'page', 'id');
   const slug = requireField(raw.slug, 'page', 'slug');
   const date = requireField(raw.date, 'page', 'date');
-  const title = collapseWhitespace(requireField(raw.title?.rendered, 'page', 'title.rendered'));
+  const title = collapseWhitespace(decodeHtmlEntities(requireField(raw.title?.rendered, 'page', 'title.rendered')));
   const content = requireField(raw.content?.rendered, 'page', 'content.rendered');
 
   return {
