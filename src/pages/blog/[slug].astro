@@ -1,0 +1,56 @@
+---
+/**
+ * Single post page. Every post is generated from the already-fetched,
+ * already-normalized `getAllPosts()` collection via `getStaticPaths` —
+ * no per-slug fetch happens here.
+ */
+import PostContent from '../../components/PostContent.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { postPath } from '../../lib/routes';
+import { buildMetadata, buildPostJsonLd } from '../../lib/seo/metadata';
+import { getAllPosts } from '../../lib/wordpress/posts';
+import type { Post } from '../../lib/wordpress/normalizers';
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+export interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+
+const metadata = buildMetadata({
+  title: post.title,
+  description: post.excerpt,
+  path: postPath(post.slug),
+  imageUrl: post.featuredImage?.url,
+});
+
+const jsonLd = buildPostJsonLd(post, metadata.canonical);
+
+const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout metadata={metadata} jsonLd={jsonLd}>
+  <article>
+    <header class="page-header">
+      <h1 class="page-header__title">{post.title}</h1>
+      <p class="page-header__meta">
+        <time datetime={post.date}>{formattedDate}</time>
+        {post.author && <> · {post.author.name}</>}
+      </p>
+    </header>
+    <PostContent html={post.content} />
+  </article>
+</BaseLayout>

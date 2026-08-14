@@ -1,0 +1,45 @@
+---
+/**
+ * Generic WordPress page route. Every page is generated from the
+ * already-fetched, already-normalized `getAllPages()` collection via
+ * `getStaticPaths` — no per-slug fetch happens here. `getAllPages` already
+ * asserts no page slug collides with a reserved root route (e.g. "blog")
+ * before this route ever sees the collection.
+ */
+import PostContent from '../components/PostContent.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { pagePath } from '../lib/routes';
+import { buildMetadata } from '../lib/seo/metadata';
+import { getAllPages } from '../lib/wordpress/pages';
+import type { Page } from '../lib/wordpress/normalizers';
+
+export async function getStaticPaths() {
+  const pages = await getAllPages();
+
+  return pages.map((page) => ({
+    params: { slug: page.slug },
+    props: { page },
+  }));
+}
+
+export interface Props {
+  page: Page;
+}
+
+const { page } = Astro.props;
+
+const metadata = buildMetadata({
+  title: page.title,
+  description: page.excerpt,
+  path: pagePath(page.slug),
+});
+---
+
+<BaseLayout metadata={metadata}>
+  <article>
+    <header class="page-header">
+      <h1 class="page-header__title">{page.title}</h1>
+    </header>
+    <PostContent html={page.content} />
+  </article>
+</BaseLayout>

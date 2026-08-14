@@ -1,0 +1,36 @@
+---
+/**
+ * Static pagination links for the blog index. Page 1 always links to
+ * `/blog/`; every later page links to its numbered `/blog/page/N/` route.
+ * Renders nothing when there is only one page.
+ */
+import { blogPagePath } from '../lib/routes';
+
+export interface Props {
+  page: number;
+  totalPages: number;
+}
+
+const { page, totalPages } = Astro.props;
+const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+---
+
+{
+  totalPages > 1 && (
+    <nav aria-label="Pagination">
+      <ul class="pagination">
+        {pages.map((pageNumber) => (
+          <li>
+            <a
+              class="pagination__link"
+              href={blogPagePath(pageNumber)}
+              aria-current={pageNumber === page ? 'page' : undefined}
+            >
+              {pageNumber}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}

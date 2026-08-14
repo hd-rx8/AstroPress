@@ -1,0 +1,242 @@
+/*
+ * Global stylesheet: system font stack, readable measure, accessible focus
+ * styles, cards, static pagination, and a semantic `.prose` reading area.
+ *
+ * Plain CSS only — no framework, no client-side JS, no animation system.
+ */
+
+:root {
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+  --color-muted: #595959;
+  --color-border: #dcdcdc;
+  --color-accent: #1d4ed8;
+  --color-accent-contrast: #ffffff;
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji';
+  --content-max-width: 42rem;
+  --page-max-width: 64rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+  --radius: 0.5rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.site-header,
+.site-footer,
+.site-main {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-3);
+}
+
+.site-header {
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-header__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.site-header__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-main {
+  padding-block: var(--space-5);
+}
+
+.site-footer {
+  padding-block: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+/* Cards */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card__image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.card__body {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.card__title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.card__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card__title a:hover {
+  text-decoration: underline;
+}
+
+.card__excerpt {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+}
+
+.card__meta {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+/* Pagination */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  list-style: none;
+  padding: 0;
+}
+
+.pagination__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding-inline: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.pagination__link:hover {
+  border-color: var(--color-accent);
+}
+
+.pagination__link[aria-current='page'] {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+/* Prose (rendered WordPress HTML) */
+
+.prose {
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+}
+
+.prose > * + * {
+  margin-top: var(--space-3);
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  line-height: 1.25;
+}
+
+.prose img {
+  border-radius: var(--radius);
+}
+
+.prose pre {
+  overflow-x: auto;
+  padding: var(--space-3);
+  background: #f4f4f4;
+  border-radius: var(--radius);
+}
+
+.prose blockquote {
+  margin: 0;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 3px solid var(--color-border);
+  color: var(--color-muted);
+}
+
+/* Page header */
+
+.page-header {
+  max-width: var(--content-max-width);
+  margin: 0 auto var(--space-5);
+}
+
+.page-header__title {
+  margin: 0 0 var(--space-2);
+}
+
+.page-header__meta {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+}

@@ -1,0 +1,48 @@
+---
+/**
+ * Shared HTML shell for every page: renders title, description, canonical,
+ * Open Graph / Twitter metadata from a `Metadata` object, and an optional
+ * JSON-LD `<script>` block only when `jsonLd` is provided.
+ */
+import '../styles/global.css';
+import { SITE } from '../config/site';
+import type { Metadata } from '../lib/seo/metadata';
+
+export interface Props {
+  metadata: Metadata;
+  jsonLd?: Record<string, unknown>;
+}
+
+const { metadata, jsonLd } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{metadata.title}</title>
+    <meta name="description" content={metadata.description} />
+    <link rel="canonical" href={metadata.canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={metadata.openGraph.title} />
+    <meta property="og:description" content={metadata.openGraph.description} />
+    <meta property="og:url" content={metadata.openGraph.url} />
+    {metadata.openGraph.image && <meta property="og:image" content={metadata.openGraph.image} />}
+
+    <meta name="twitter:card" content={metadata.twitter.card} />
+
+    {jsonLd && <script type="application/ld+json" is:inline>{JSON.stringify(jsonLd)}</script>}
+  </head>
+  <body>
+    <header class="site-header">
+      <p class="site-header__title"><a href="/">{SITE.name}</a></p>
+    </header>
+    <main class="site-main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>&copy; {new Date().getFullYear()} {SITE.name}</p>
+    </footer>
+  </body>
+</html>

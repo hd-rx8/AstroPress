@@ -1,0 +1,48 @@
+---
+/**
+ * Numbered blog pagination pages (`/blog/page/2/`, `/blog/page/3/`, ...).
+ * Page 1 is intentionally excluded — it is served by `/blog/` (see
+ * `blog/index.astro`) — so `getStaticPaths` iterates
+ * `blogPaginationRoutePages`, not `1..totalPages`.
+ */
+import Pagination from '../../../components/Pagination.astro';
+import PostCard from '../../../components/PostCard.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { buildMetadata } from '../../../lib/seo/metadata';
+import { blogPaginationRoutePages, blogPagePath } from '../../../lib/routes';
+import { BLOG_PAGE_SIZE, getAllPosts, paginatePosts } from '../../../lib/wordpress/posts';
+import type { PaginatedPosts } from '../../../lib/wordpress/posts';
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+  const { totalPages } = paginatePosts(posts, 1, BLOG_PAGE_SIZE);
+
+  return blogPaginationRoutePages(totalPages).map((page) => {
+    const paginated = paginatePosts(posts, page, BLOG_PAGE_SIZE);
+    return {
+      params: { number: String(page) },
+      props: { paginated },
+    };
+  });
+}
+
+export interface Props {
+  paginated: PaginatedPosts;
+}
+
+const { paginated } = Astro.props;
+const { items, page, totalPages } = paginated;
+
+const metadata = buildMetadata({
+  title: `Blog — Page ${page}`,
+  path: blogPagePath(page),
+});
+---
+
+<BaseLayout metadata={metadata}>
+  <h1>Blog</h1>
+  <ul class="card-grid">
+    {items.map((post) => <PostCard post={post} />)}
+  </ul>
+  <Pagination page={page} totalPages={totalPages} />
+</BaseLayout>

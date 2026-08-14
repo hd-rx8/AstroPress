@@ -1,0 +1,14 @@
+---
+/**
+ * The sole raw-HTML rendering boundary in the codebase. WordPress post/page
+ * content is trusted (it comes from the site owner's own CMS), so it is
+ * rendered verbatim via `set:html` with no sanitization.
+ */
+export interface Props {
+  html: string;
+}
+
+const { html } = Astro.props;
+---
+
+<article class="prose" set:html={html} />

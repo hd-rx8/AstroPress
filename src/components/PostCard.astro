@@ -1,0 +1,39 @@
+---
+/**
+ * A single post summary card used in listing grids (home, blog index,
+ * paginated blog pages). Featured image, excerpt, and author are each
+ * rendered only when present on the normalized `Post`.
+ */
+import { postPath } from '../lib/routes';
+import type { Post } from '../lib/wordpress/normalizers';
+
+export interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const href = postPath(post.slug);
+const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<li class="card">
+  {
+    post.featuredImage && (
+      <a href={href} tabindex="-1" aria-hidden="true">
+        <img class="card__image" src={post.featuredImage.url} alt={post.featuredImage.alt} loading="lazy" />
+      </a>
+    )
+  }
+  <div class="card__body">
+    <h2 class="card__title"><a href={href}>{post.title}</a></h2>
+    <p class="card__meta">
+      <time datetime={post.date}>{formattedDate}</time>
+      {post.author && <> · {post.author.name}</>}
+    </p>
+    {post.excerpt && <p class="card__excerpt">{post.excerpt}</p>}
+  </div>
+</li>
