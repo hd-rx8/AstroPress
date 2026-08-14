@@ -43,7 +43,7 @@ SITE_URL=https://www.example.com
 ```
 
 - `WORDPRESS_URL` — the base URL of your WordPress installation (no `/wp-json` suffix, no trailing slash). The starter derives `/wp-json/wp/v2` from it internally.
-- `SITE_URL` — the public URL this Astro site will be served from. It drives canonical URLs, Open Graph/Twitter tags, JSON-LD, the sitemap, and `robots.txt`.
+- `SITE_URL` — the public URL this Astro site will be served from. It drives canonical URLs, Open Graph/Twitter tags, JSON-LD, the sitemap, and `robots.txt`. It must be a domain or subdomain **root** (no path): V1 does not support serving the site from a subpath such as `https://example.com/blog`, and rejects such a value with an explicit error rather than silently generating URLs that drop the subpath.
 
 Then run:
 
@@ -65,8 +65,8 @@ docker compose up -d
 
 This starts:
 
-- `mysql` on `127.0.0.1:3306` (root/user/password all `wordpress`, database `wordpress`)
 - `wordpress` on `127.0.0.1:8080`
+- `mysql`, reachable only from the `wordpress` container over the Compose network (root/user/password all `wordpress`, database `wordpress`). It deliberately publishes no host port, so it cannot collide with a MySQL you already run locally.
 
 Then:
 

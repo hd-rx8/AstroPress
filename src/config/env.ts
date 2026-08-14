@@ -31,34 +31,68 @@ function normalizeRootUrl(url: URL): URL {
   return normalized;
 }
 
-function trimTrailingSlash(url: URL): URL {
-  const normalized = new URL(url.toString());
-  if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
-    normalized.pathname = normalized.pathname.replace(/\/+$/, '');
-  }
-  return normalized;
+/** True for a URL that addresses the host root, e.g. `https://example.com` or `https://example.com/`. */
+function hasRootPath(url: URL): boolean {
+  return url.pathname === '/' || url.pathname === '';
 }
 
 export function loadEnv(source: Record<string, string | undefined>): AppEnv {
   const wordpressUrlRaw = parseAbsoluteHttpUrl('WORDPRESS_URL', source.WORDPRESS_URL);
 
-  const wordpressPathname = wordpressUrlRaw.pathname;
-  if (wordpressPathname !== '/' && wordpressPathname !== '') {
+  if (!hasRootPath(wordpressUrlRaw)) {
     throw new Error(
-      `WORDPRESS_URL must be the site root (no path), received "${source.WORDPRESS_URL}".`,
+      `WORDPRESS_URL must be the site root (no path), received "${source.WORDPRESS_URL}". ` +
+        'Drop the path (including any "/wp-json" suffix) — the REST base is derived automatically.',
     );
   }
 
   const siteUrlRaw = parseAbsoluteHttpUrl('SITE_URL', source.SITE_URL);
 
+  // V1 deploys to a domain root only. A subpath here would be silently dropped
+  // when route paths are resolved against it (`new URL('/blog/', siteUrl)`),
+  // producing canonical URLs, JSON-LD and a sitemap reference that all point at
+  // the wrong location — so reject it up front instead of half-supporting it.
+  if (!hasRootPath(siteUrlRaw)) {
+    throw new Error(
+      `SITE_URL must be the site root (no path), received "${source.SITE_URL}". ` +
+        'Subpath deployments (e.g. "https://example.com/blog") are not supported in V1 — ' +
+        'serve the site from a domain or subdomain root instead.',
+    );
+  }
+
   const wordpressUrl = normalizeRootUrl(wordpressUrlRaw);
-  const siteUrl = trimTrailingSlash(siteUrlRaw);
+  const siteUrl = normalizeRootUrl(siteUrlRaw);
 
   const wordpressApiUrl = new URL(
     `${wordpressUrl.origin}/wp-json/wp/v2`,
   );
 
   return { wordpressUrl, wordpressApiUrl, siteUrl };
+}
+
+/**
+ * Picks a configuration value from the two sources available during Astro's
+ * config-load phase, with real `process.env` winning over values read from
+ * `.env` files — the same precedence Vite/Astro apply to the app itself.
+ *
+ * This exists because `astro.config.ts` runs before Astro loads `.env` for
+ * the app, so it must read the `.env` files itself. Consulting only
+ * `process.env` there meant a `SITE_URL` set solely in `.env` (the documented
+ * quick start) was invisible during config load, and `site` silently fell back
+ * to a placeholder — emitting a sitemap full of placeholder URLs while the
+ * app's own canonical tags used the real host. Kept here, beside the rest of
+ * the environment boundary, so it is unit-testable rather than buried in the
+ * config file.
+ *
+ * An empty string is treated as unset, matching {@link loadEnv}.
+ */
+export function pickEnvValue(
+  name: string,
+  processEnv: Record<string, string | undefined>,
+  fileEnv: Record<string, string | undefined>,
+): string | undefined {
+  const value = processEnv[name] ?? fileEnv[name];
+  return value === undefined || value === '' ? undefined : value;
 }
 
 let cachedEnv: AppEnv | undefined;
