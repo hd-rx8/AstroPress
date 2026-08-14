@@ -18,9 +18,18 @@ const { metadata, jsonLd } = Astro.props;
 /**
  * Escapes `<` so a `</script>` substring inside serialized JSON-LD data
  * (e.g. from an editorial post title) can never close the script tag early
- * and inject markup. Astro does not HTML-escape expression content placed
- * inside a `<script>` tag — this is the standard mitigation for safely
- * embedding JSON in a script element.
+ * and inject markup — the standard mitigation for safely embedding JSON in
+ * a script element. The pre-escaped string is then injected via
+ * `set:html` below: a plain `{jsonLdScript}` expression child would not
+ * work here because `is:inline` (required to stop Astro's script
+ * processor from choking on non-JS content) also disables expression
+ * evaluation inside `<script>` children, so `set:html` is the only way to
+ * get the actual JSON into the tag rather than the literal text
+ * "{jsonLdScript}". This makes `BaseLayout.astro` a second, narrower
+ * `set:html` user alongside `PostContent.astro` — that pairing is
+ * intentional: this content is pre-escaped, self-generated JSON, not raw
+ * untrusted post HTML, so it doesn't violate the "sole raw-HTML rendering
+ * boundary" constraint that `PostContent.astro` exists to uphold.
  */
 const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : undefined;
 ---
@@ -41,7 +50,7 @@ const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : 
 
     <meta name="twitter:card" content={metadata.twitter.card} />
 
-    {jsonLdScript && <script type="application/ld+json" is:inline>{jsonLdScript}</script>}
+    {jsonLdScript && <script type="application/ld+json" set:html={jsonLdScript} />}
   </head>
   <body>
     <header class="site-header">
