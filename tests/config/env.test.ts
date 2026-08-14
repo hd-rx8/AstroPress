@@ -38,4 +38,15 @@ describe('loadEnv', () => {
       loadEnv({ WORDPRESS_URL: 'https://cms.example.com', SITE_URL: '/blog' }),
     ).toThrow(/SITE_URL/);
   });
+
+  it.each([
+    ['https://example.com/blog', 'https://example.com/blog'],
+    ['https://example.com/blog/', 'https://example.com/blog'],
+  ])('preserves a SITE_URL subpath instead of truncating to root (%s)', (input, expected) => {
+    const { siteUrl } = loadEnv({
+      WORDPRESS_URL: 'https://cms.example.com',
+      SITE_URL: input,
+    });
+    expect(siteUrl).toEqual(new URL(expected));
+  });
 });

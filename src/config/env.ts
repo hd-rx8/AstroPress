@@ -31,6 +31,14 @@ function normalizeRootUrl(url: URL): URL {
   return normalized;
 }
 
+function trimTrailingSlash(url: URL): URL {
+  const normalized = new URL(url.toString());
+  if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
+    normalized.pathname = normalized.pathname.replace(/\/+$/, '');
+  }
+  return normalized;
+}
+
 export function loadEnv(source: Record<string, string | undefined>): AppEnv {
   const wordpressUrlRaw = parseAbsoluteHttpUrl('WORDPRESS_URL', source.WORDPRESS_URL);
 
@@ -44,7 +52,7 @@ export function loadEnv(source: Record<string, string | undefined>): AppEnv {
   const siteUrlRaw = parseAbsoluteHttpUrl('SITE_URL', source.SITE_URL);
 
   const wordpressUrl = normalizeRootUrl(wordpressUrlRaw);
-  const siteUrl = normalizeRootUrl(siteUrlRaw);
+  const siteUrl = trimTrailingSlash(siteUrlRaw);
 
   const wordpressApiUrl = new URL(
     `${wordpressUrl.origin}/wp-json/wp/v2`,
