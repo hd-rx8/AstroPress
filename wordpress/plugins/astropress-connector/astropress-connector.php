@@ -4,7 +4,8 @@
  * Plugin URI:        https://github.com/hd-rx8/AstroPress-Headless-Starter
  * Description:       Bridges WordPress with your static Astro frontend: automated redirects, preview links, deploy webhooks, and health checks.
  * Version:           1.1.0
- * Author:            AstroPress Team
+ * Author:            hdrx
+ * Author URI:        https://github.com/hd-rx8
  * License:           MIT
  * License URI:       https://opensource.org/licenses/MIT
  * Text Domain:       astropress-connector
@@ -40,6 +41,19 @@ require_once ASTROPRESS_CONNECTOR_DIR . 'includes/class-redirects.php';
 require_once ASTROPRESS_CONNECTOR_DIR . 'includes/class-deploy-hook.php';
 require_once ASTROPRESS_CONNECTOR_DIR . 'includes/class-health-endpoint.php';
 require_once ASTROPRESS_CONNECTOR_DIR . 'includes/class-preview-endpoint.php';
+
+/**
+ * Customizes WordPress Admin Footer credits.
+ */
+function astropress_admin_footer_credits($footer_text) {
+    return 'Criado com <span style="color: #ef4444;">&hearts;</span> por <a href="https://github.com/hd-rx8" target="_blank" rel="noopener noreferrer" style="font-weight: 700; color: #2563eb;">hdrx</a> &bull; <a href="https://github.com/hd-rx8/AstroPress-Headless-Starter" target="_blank" rel="noopener noreferrer" style="font-weight: 600; text-decoration: none;">AstroPress Headless Starter</a>';
+}
+add_filter('admin_footer_text', 'astropress_admin_footer_credits');
+
+function astropress_admin_footer_version($version_text) {
+    return 'AstroPress v' . ASTROPRESS_CONNECTOR_VERSION . ' (Astro 5 + WP Headless)';
+}
+add_filter('update_footer', 'astropress_admin_footer_version', 11);
 
 /**
  * Initializes all AstroPress Connector components.

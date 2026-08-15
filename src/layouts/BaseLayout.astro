@@ -20,6 +20,14 @@ const { metadata, jsonLd, ogType = 'website' } = Astro.props;
 const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : undefined;
 ---
 
+<!--
+========================================================================
+  🚀 AstroPress Headless Starter
+  Architected & Crafted with precision by hdrx
+  GitHub: https://github.com/hd-rx8
+  Repository: https://github.com/hd-rx8/AstroPress-Headless-Starter
+========================================================================
+-->
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
@@ -28,6 +36,9 @@ const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : 
     <meta name="description" content={metadata.description} />
     <link rel="canonical" href={metadata.canonical} />
     <meta name="robots" content={metadata.robots} />
+    <meta name="author" content="hdrx" />
+    <meta name="creator" content="hdrx (https://github.com/hd-rx8)" />
+    <meta name="publisher" content="AstroPress by hdrx" />
 
     <!-- Google Fonts: Plus Jakarta Sans (Display) + Inter (Body) + JetBrains Mono (Code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -162,7 +173,7 @@ const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : 
 
       <div class="footer__bottom">
         <div class="footer__bottom-inner">
-          <p>&copy; {new Date().getFullYear()} {SITE.name}. Desenvolvido com Astro e WordPress Headless.</p>
+          <p>&copy; {new Date().getFullYear()} {SITE.name}. Desenvolvido por <a href="https://github.com/hd-rx8" target="_blank" rel="noopener noreferrer" style="font-weight: 600; color: inherit; text-decoration: underline;">hdrx</a> com Astro e WordPress Headless.</p>
           <div class="footer__status-badge">
             <span class="status-dot"></span>
             <span>Sistema 100% Estático</span>
