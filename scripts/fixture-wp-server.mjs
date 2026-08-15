@@ -25,86 +25,100 @@ const MOCK_AUTHOR = {
 const POSTS = [
   {
     id: 1,
-    slug: 'o-que-e-astropress-headless',
+    slug: 'manifesto-wordpress-headless-astro',
     date: '2026-08-14T10:00:00',
-    title: { rendered: 'O que é o AstroPress e por que usar WordPress Headless com Astro 5' },
+    title: { rendered: 'Manifesto &amp; Tese: Por que WordPress Headless + Astro 5 é a Arquitetura Definitiva' },
     content: {
       rendered: `
-        <h2>A Revolução do WordPress Headless</h2>
-        <p>O WordPress alimenta mais de 40% de toda a web devido à sua interface editorial intuitiva, robustez e ecossistema incomparável. No entanto, os temas tradicionais em PHP podem sofrer com lentidão, sobrecarga de plugins, vulnerabilidades de segurança e custos elevados de servidor sob alto tráfego.</p>
-        <p>É aqui que entra a arquitetura <strong>Headless (desacoplada)</strong>: o WordPress atua exclusivamente como o CMS de gerenciamento de conteúdo no backend, enquanto o <strong>Astro 5</strong> assume o controle total da interface pública com geração de sites 100% estáticos (SSG).</p>
-        
-        <h2>Por que escolher o AstroPress?</h2>
+        <h2>1. O Dilema do Monólito WordPress Tradicional</h2>
+        <p>O WordPress alimenta mais de 40% da internet e conquistou essa hegemonia por méritos indiscutíveis: um ecossistema editorial amigável, o poder do editor em blocos Gutenberg, flexibilidade de taxonomias e gerenciamento de mídia centralizado.</p>
+        <p>No entanto, a arquitetura tradicional em PHP acopla todas as camadas do sistema em uma única máquina:</p>
         <ul>
-          <li><strong>0 KB de JavaScript em páginas de conteúdo:</strong> Carregamento instantâneo com HTML e CSS puros.</li>
-          <li><strong>Pontuação 100 no Core Web Vitals:</strong> Otimização extrema de LCP, FID/INP e CLS.</li>
-          <li><strong>Segurança Absoluta:</strong> Seu banco de dados MySQL e painel administrativo nunca são expostos diretamente aos visitantes públicos.</li>
-          <li><strong>Economia de Infraestrutura:</strong> Hospede seu frontend gratuitamente em CDNs globais como Cloudflare Pages, Vercel ou Netlify.</li>
+          <li><strong>Gargalo de Concorrência:</strong> Cada requisição HTTP pública aciona o runtime PHP-FPM, executa dezenas de queries SQL no MySQL e compila templates no servidor em tempo real.</li>
+          <li><strong>Vulnerabilidade e Superfície de Ataque:</strong> A presença de dezenas de plugins de terceiros expõe brechas diretamente na porta 80/443 pública.</li>
+          <li><strong>Sobrecarga no Frontend:</strong> Temas clássicos e page-builders frequentemente injetam dezenas de arquivos CSS/JS não otimizados, penalizando drasticamente os índices do Core Web Vitals (LCP, FID/INP e CLS).</li>
         </ul>
+
+        <h2>2. A Ilusão do JavaScript Excessivo nas SPAs</h2>
+        <p>Muitas equipes tentaram resolver esse problema migrando para Single Page Applications ou frameworks como Next.js e Remix. Embora a separação de backend/frontend traga benefícios, ela introduziu uma nova armadilha: <em>o custo massivo da hidratação client-side</em>.</p>
+        <p>Para ler um artigo de blog — que é essencialmente texto e imagem estáticos —, navegadores móveis são forçados a baixar centenas de kilobytes de JavaScript, fazer o parse da AST e reconstruir o DOM virtual, consumindo bateria e travando a thread principal.</p>
+
+        <h2>3. A Tese do AstroPress: O Equilíbrio Perfeito</h2>
+        <p>O <strong>AstroPress</strong> estabelece uma fronteira limpa e intransigente entre editorial e renderização:</p>
+        <ol>
+          <li><strong>WordPress como Headless CMS:</strong> Mantido onde é imbatível — redação, fluxos de publicação, categorização e gestão de ativos. O banco de dados e o PHP ficam isolados, acessíveis apenas pela equipe editorial e pelo runner de build.</li>
+          <li><strong>Astro 5 como Gerador Estático (SSG):</strong> Durante o build, o Astro consome a REST API do WordPress e compila todo o site em puro HTML e CSS semântico.</li>
+          <li><strong>0 KB de JavaScript Cliente por Padrão:</strong> Páginas de conteúdo não possuem runtime JS no navegador, garantindo carregamento instantâneo e pontuações perfeitas de 100/100 no Lighthouse.</li>
+        </ol>
       `,
     },
     excerpt: {
       rendered:
-        '<p>Entenda as vantagens da arquitetura desacoplada: máxima performance, zero dependência de PHP em runtime, custos reduzidos e a facilidade editorial que sua equipe já conhece no WordPress.</p>',
+        '<p>Uma análise aprofundada sobre os limites do monólito tradicional, os trade-offs de SPAs monolíticas em Next.js e como o AstroPress combina o melhor ecossistema editorial com zero runtime overhead.</p>',
     },
     _embedded: {
       'wp:featuredmedia': [MOCK_ROCKET_IMAGE],
       author: [MOCK_AUTHOR],
       'wp:term': [
         [
-          { id: 1, name: 'Arquitetura', slug: 'arquitetura', taxonomy: 'category' },
-          { id: 2, name: 'Conceitos', slug: 'conceitos', taxonomy: 'category' },
+          { id: 1, name: 'Manifesto', slug: 'manifesto', taxonomy: 'category' },
+          { id: 2, name: 'Arquitetura', slug: 'arquitetura', taxonomy: 'category' },
         ],
       ],
     },
   },
   {
     id: 2,
-    slug: 'renderizacao-estatica-zero-js',
+    slug: 'arquitetura-do-core-e-normalizacao',
     date: '2026-08-13T10:00:00',
-    title: { rendered: 'Como Funciona a Renderização Estática (SSG) com 0 KB de JavaScript' },
+    title: { rendered: 'Deep Dive no Core: Normalização de Dados, Resiliência e Isolamento de Payloads' },
     content: {
       rendered: `
-        <h2>O Ciclo de Vida do Build Estático</h2>
-        <p>No modelo tradicional, cada visitante que acessa uma página faz o servidor executar dezenas de consultas SQL no banco de dados e processar múltiplos arquivos PHP. No AstroPress, esse processo acontece apenas <strong>uma vez, durante o build</strong>.</p>
-        
-        <h2>Vantagens da Abordagem Zero-JS</h2>
-        <p>Muitos frameworks modernos injetam centenas de kilobytes de JavaScript para hidratar componentes que são puro texto. O Astro adota a arquitetura de ilhas (Islands Architecture), emitindo apenas HTML semântico e CSS enxuto nas rotas editoriais.</p>
+        <h2>1. A Anatomia e Armadilhas da REST API do WordPress</h2>
+        <p>A API REST nativa do WordPress (<code>/wp-json/wp/v2/</code>) é rica, porém possui peculiaridades que não devem vazar para os componentes de interface:</p>
+        <ul>
+          <li>Campos envelopados em objetos <code>rendered</code> (ex: <code>title.rendered</code>, <code>content.rendered</code>).</li>
+          <li>Entidades HTML escapadas (ex: <code>&#8217;</code> para apóstrofos, <code>&amp;</code> para e-comercial).</li>
+          <li>Stubs de erro no parâmetro <code>_embed</code>: quando uma mídia ou autor está inacessível ou sem permissão, o WordPress retorna um array contendo um objeto de erro <code>[{ code: "rest_forbidden" }]</code> ao invés de um array vazio.</li>
+        </ul>
+
+        <h2>2. Camada de Transporte Resiliente (<code>client.ts</code>)</h2>
+        <p>O cliente HTTP centralizado em <code>src/lib/wordpress/client.ts</code> é a única interface que invoca <code>fetch()</code> contra o WordPress. Ele implementa timeouts com <code>AbortController</code>, parsing resiliente e extração autoritativa dos headers <code>X-WP-Total</code> e <code>X-WP-TotalPages</code>.</p>
       `,
     },
     excerpt: {
       rendered:
-        '<p>Descubra como o Astro compila o conteúdo do WordPress diretamente em HTML puro no build time, garantindo pontuações perfeitas de 100 no Core Web Vitals e carregamento instantâneo.</p>',
+        '<p>Como o módulo src/lib/wordpress/ isola o frontend dos detalhes da REST API, decodifica entidades HTML e trata stubs de erro com TypeScript estrito.</p>',
     },
     _embedded: {
       'wp:featuredmedia': [MOCK_ROCKET_IMAGE],
       author: [MOCK_AUTHOR],
       'wp:term': [
         [
-          { id: 3, name: 'Performance', slug: 'performance', taxonomy: 'category' },
-          { id: 4, name: 'Astro 5', slug: 'astro-5', taxonomy: 'category' },
+          { id: 3, name: 'Engenharia', slug: 'engenharia', taxonomy: 'category' },
+          { id: 4, name: 'TypeScript', slug: 'typescript', taxonomy: 'category' },
         ],
       ],
     },
   },
   {
     id: 3,
-    slug: 'guia-de-configuracao-e-conexao',
+    slug: 'guia-definitivo-de-setup-e-deploy',
     date: '2026-08-12T10:00:00',
-    title: { rendered: 'Guia de Configuração e Conexão: Variáveis de Ambiente e Permalinks' },
+    title: { rendered: 'Guia Definitivo de Setup: Do Docker Local à Produção em Alta Escala' },
     content: {
       rendered: `
-        <h2>Configuração Rápida em 3 Passos</h2>
-        <p>Para conectar o Astro ao seu WordPress existente ou local (Docker), você só precisa configurar o arquivo <code>.env</code> na raiz do projeto:</p>
-        <pre><code>WORDPRESS_URL=https://cms.seusite.com\nSITE_URL=https://www.seusite.com\nASTROPRESS_PREVIEW_SECRET=sua-chave-secreta</code></pre>
+        <h2>1. Configuração de Variáveis de Ambiente</h2>
+        <p>O arquivo <code>.env</code> na raiz do projeto controla a integração entre o CMS e o frontend:</p>
+        <pre><code>WORDPRESS_URL=http://localhost:8080\nSITE_URL=http://localhost:4321\nASTROPRESS_PREVIEW_SECRET=seu-segredo-aqui</code></pre>
         
-        <h2>Estrutura de Permalinks Recomendada</h2>
-        <p>No painel do WordPress, navegue até <em>Configurações > Links Permanentes</em> e selecione a opção <strong>"Nome do post" (/%postname%/)</strong>. Isso garante slugs limpos e consistentes para todas as rotas do blog.</p>
+        <h2>2. Ambiente Local Rápido com Docker</h2>
+        <p>O starter inclui um <code>docker-compose.yml</code> pronto para uso com WordPress 7.0 e MySQL 8.4 isolados.</p>
       `,
     },
     excerpt: {
       rendered:
-        '<p>Passo a passo para conectar o Astro ao seu WordPress local (Docker) ou de produção, configurando WORDPRESS_URL, SITE_URL e links permanentes amigáveis.</p>',
+        '<p>Configuração passo a passo de variáveis de ambiente, Docker Compose, regras de permalinks e deploy estático automatizado em CDNs.</p>',
     },
     _embedded: {
       'wp:featuredmedia': [MOCK_ROCKET_IMAGE],
@@ -112,28 +126,26 @@ const POSTS = [
       'wp:term': [
         [
           { id: 5, name: 'Guia', slug: 'guia', taxonomy: 'category' },
-          { id: 6, name: 'Setup', slug: 'setup', taxonomy: 'category' },
+          { id: 6, name: 'DevOps', slug: 'devops', taxonomy: 'category' },
         ],
       ],
     },
   },
   {
     id: 4,
-    slug: 'draft-preview-em-tempo-real',
+    slug: 'draft-preview-e-fluxo-editorial',
     date: '2026-08-11T10:00:00',
-    title: { rendered: 'Draft Preview em Tempo Real: Como Visualizar Rascunhos no Astro' },
+    title: { rendered: 'Draft Preview em Tempo Real: Como Visualizar Rascunhos sem Rebuild' },
     content: {
       rendered: `
-        <h2>O Desafio dos Rascunhos em Sites Estáticos</h2>
-        <p>Um dos maiores receios de equipes editoriais ao migrar para Jamstack ou SSG é a perda do botão "Visualizar" em tempo real. No AstroPress, isso foi completamente resolvido com o endpoint de preview seguro.</p>
-        
-        <h2>Fluxo de Preview Tokenizado</h2>
-        <p>Ao clicar em "Visualizar" no Gutenberg ou Classic Editor, o WordPress redireciona o editor para <code>/preview?id=123&type=post&secret=...</code> no Astro. O Astro valida o token com a REST API e carrega o rascunho instantaneamente com a barra de ferramentas flutuante <code>PreviewBanner</code>.</p>
+        <h2>1. O Desafio Editorial em Arquiteturas SSG</h2>
+        <p>Em geradores de sites estáticos puros, redatores e editores costumam enfrentar uma grande barreira: como visualizar uma postagem não publicada ou uma revisão antes de disparar o build público?</p>
+        <p>O AstroPress soluciona essa dor através de uma rota de renderização sob demanda dedicada (<code>export const prerender = false</code>) em <code>src/pages/preview.astro</code>.</p>
       `,
     },
     excerpt: {
       rendered:
-        '<p>Conheça o fluxo de publicação e preview seguro. Visualize alterações não publicadas do Gutenberg e Classic Editor sem precisar reexecutar o build estático.</p>',
+        '<p>O handshake seguro tokenizado entre o plugin AstroPress Connector e a rota sob demanda /preview para visualização instantânea de rascunhos.</p>',
     },
     _embedded: {
       'wp:featuredmedia': [MOCK_ROCKET_IMAGE],
@@ -141,34 +153,28 @@ const POSTS = [
       'wp:term': [
         [
           { id: 7, name: 'Workflow', slug: 'workflow', taxonomy: 'category' },
-          { id: 8, name: 'Preview', slug: 'preview', taxonomy: 'category' },
+          { id: 8, name: 'Segurança', slug: 'seguranca', taxonomy: 'category' },
         ],
       ],
     },
   },
   {
     id: 5,
-    slug: 'seo-e-otimizacao-de-imagens',
+    slug: 'seo-avancado-e-otimizacao-de-imagens',
     date: '2026-08-10T10:00:00',
-    title: { rendered: 'Cascata de SEO Dinâmica e Otimização de Imagens com astro:assets' },
+    title: { rendered: 'Engenharia de SEO &amp; Otimização de Imagens: Cascata de Metadados e WebP/AVIF' },
     content: {
       rendered: `
-        <h2>Cascata de SEO em 4 Níveis</h2>
-        <p>O AstroPress extrai metadados através de uma hierarquia inteligente:</p>
-        <ol>
-          <li><strong>Yoast SEO:</strong> Ingestão dos campos <code>yoast_head_json</code>.</li>
-          <li><strong>Rank Math SEO:</strong> Ingestão dos campos <code>rank_math_seo</code>.</li>
-          <li><strong>Campos Nativos do WordPress:</strong> Títulos, resumos e mídias padrão.</li>
-          <li><strong>Defaults do Site:</strong> Metadados de fallback configurados em <code>src/config/site.ts</code>.</li>
-        </ol>
+        <h2>1. A Cascata de SEO em 4 Níveis</h2>
+        <p>O módulo <code>src/lib/wordpress/seo.ts</code> resolve automaticamente os metadados de cada página seguindo uma hierarquia de precedência estrita: Yoast SEO > Rank Math > Campos Nativos > Defaults do Site.</p>
         
-        <h2>Otimização Automática de Imagens</h2>
-        <p>Todas as imagens de destaque são processadas via <code>astro:assets</code>, gerando formatos modernos WebP e AVIF com <code>srcset</code> responsivo e zero Cumulative Layout Shift (CLS = 0).</p>
+        <h2>2. Pipeline de Imagens com astro:assets e Zero CLS</h2>
+        <p>O starter utiliza o componente oficial <code>&lt;Image /&gt;</code> do Astro, baixando e convertendo as imagens remotas do WordPress durante o build com zero CLS.</p>
       `,
     },
     excerpt: {
       rendered:
-        '<p>Integração automática com Yoast SEO e Rank Math, Schema.org JSON-LD para motores de busca e geração de imagens responsivas em WebP/AVIF sem layout shift.</p>',
+        '<p>Cascata inteligente de SEO de 4 níveis (Yoast / RankMath / Nativo / Defaults), Schema.org JSON-LD estruturado e pipeline de imagens com astro:assets.</p>',
     },
     _embedded: {
       'wp:featuredmedia': [MOCK_ROCKET_IMAGE],
@@ -176,28 +182,28 @@ const POSTS = [
       'wp:term': [
         [
           { id: 9, name: 'SEO', slug: 'seo', taxonomy: 'category' },
-          { id: 10, name: 'Imagens', slug: 'imagens', taxonomy: 'category' },
+          { id: 10, name: 'Performance', slug: 'performance', taxonomy: 'category' },
         ],
       ],
     },
   },
   {
     id: 6,
-    slug: 'headless-doctor-e-performance-budgets',
+    slug: 'observabilidade-doctor-e-performance-budgets',
     date: '2026-08-09T10:00:00',
-    title: { rendered: 'Headless Doctor e Performance Budgets: Auditoria e Saúde do Sistema' },
+    title: { rendered: 'Observabilidade e Auditoria Automática: Headless Doctor e Performance Budgets' },
     content: {
       rendered: `
-        <h2>Diagnóstico Automatizado com o Headless Doctor</h2>
-        <p>Com o comando <code>npm run doctor</code> ou na rota <code>/doctor</code>, o sistema realiza uma auditoria em 7 categorias: Conectividade, Endpoints REST, Plugin AstroPress Connector, Permalinks, SEO, Preview Secret e Padrões de Imagem.</p>
+        <h2>1. Diagnóstico Automatizado com o Headless Doctor</h2>
+        <p>Sistemas desacoplados podem falhar silenciosamente se a API do CMS sofrer alterações ou se as credenciais ficarem dessincronizadas. O <strong>Headless Doctor</strong> (<code>npm run doctor</code> ou <code>/doctor</code>) valida 7 categorias de testes em milissegundos.</p>
         
-        <h2>Orçamentos Estritos de Performance</h2>
-        <p>O arquivo <code>budget.json</code> define limites rígidos (CSS &le; 25 KB, HTML &le; 50 KB, 0 KB JS editorial). Qualquer build que ultrapasse esses limites é barrado automaticamente pelo <code>npm run build:ci</code>.</p>
+        <h2>2. Orçamentos Estritos de Performance</h2>
+        <p>O arquivo <code>budget.json</code> e o script <code>npm run audit:perf</code> bloqueiam builds que ultrapassem limites de peso ou introduzam scripts em páginas editoriais.</p>
       `,
     },
     excerpt: {
       rendered:
-        '<p>Como auditar a saúde da sua REST API com o comando npm run doctor e garantir que seus limites de performance nunca sejam violados em produção.</p>',
+        '<p>Como o comando npm run doctor e o motor de orçamentos de performance em budget.json garantem a estabilidade e velocidade do seu projeto em produção.</p>',
     },
     _embedded: {
       'wp:featuredmedia': [MOCK_ROCKET_IMAGE],
