@@ -1,6 +1,6 @@
 ---
 /**
- * Home page: shows the most recent posts (not the full blog listing).
+ * Home page: Hero introduction and latest posts.
  */
 import PostCard from '../components/PostCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -20,9 +20,28 @@ const jsonLd = buildWebsiteJsonLd();
 ---
 
 <BaseLayout metadata={metadata} jsonLd={jsonLd}>
-  <h1>{SITE.name}</h1>
-  <ul class="card-grid">
-    {recentPosts.map((post) => <PostCard post={post} />)}
-  </ul>
-</BaseLayout>
+  <section class="hero">
+    <div class="hero__badge">WordPress Headless + Astro 5</div>
+    <h1 class="hero__title">Performance máxima e arquitetura moderna para o seu WordPress</h1>
+    <p class="hero__description">
+      Gerencie o conteúdo no painel do WordPress e renderize páginas estáticas ultrarrápidas com Astro. Zero dependência de PHP em tempo de execução, Core Web Vitals perfeitos e total controle do frontend.
+    </p>
+    <div class="hero__actions">
+      <a href="/blog/" class="btn btn--primary">Explorar Artigos &rarr;</a>
+      <a href="/about/" class="btn btn--secondary">Sobre o Projeto</a>
+    </div>
+  </section>
 
+  <section class="section">
+    <div class="section__header">
+      <div>
+        <h2 class="section__title">Artigos Recentes</h2>
+        <p class="section__subtitle">Publicações diretas da API REST do WordPress</p>
+      </div>
+      <a href="/blog/" class="section__link">Ver todos &rarr;</a>
+    </div>
+    <ul class="card-grid">
+      {recentPosts.map((post) => <PostCard post={post} />)}
+    </ul>
+  </section>
+</BaseLayout>
