@@ -23,7 +23,7 @@ WordPress stays the editorial system of record. Astro reads content from the Wor
 └──────┬──────┘
        │ build (SSG) / on-demand (Draft Preview)
        ▼
-   Static HTML / Live Preview
+   Static HTML / Live Preview / Doctor Diagnostics
 ```
 
 ## The content layer
@@ -68,9 +68,10 @@ ASTROPRESS_PREVIEW_SECRET=your-shared-secret
 - `SITE_URL` — the public URL this Astro site will be served from. It drives canonical URLs, Open Graph/Twitter tags, JSON-LD, the sitemap, and `robots.txt`. It must be a domain or subdomain **root** (no path).
 - `ASTROPRESS_PREVIEW_SECRET` — shared secret token for authenticating on-demand draft preview requests from WordPress.
 
-Then run:
+Then verify your setup and run:
 
 ```bash
+npm run doctor # Run automated diagnostics
 npm run dev
 ```
 
@@ -101,7 +102,7 @@ Then:
    ASTROPRESS_PREVIEW_SECRET=local-dev-secret
    ```
 
-4. Run `npm run dev` as usual.
+4. Run `npm run doctor` to confirm connectivity, then `npm run dev`.
 
 To stop and remove the containers:
 
@@ -134,10 +135,32 @@ Individual post routes do **not** re-fetch a single post by slug at build time �
 /blog/[slug]/         individual post
 /[slug]/              individual WordPress page
 /preview              on-demand draft preview route (requires secret)
+/doctor               web diagnostics dashboard
 /robots.txt
 ```
 
 `/blog/` is the single canonical route for page one of posts; numbered pagination starts at `/blog/page/2/`. If a WordPress page slug collides with a route the framework owns (`blog`, or the generated `robots.txt`), the build fails and names the conflicting slug rather than silently producing an ambiguous route.
+
+## Headless Doctor (Automated Diagnostics)
+
+Run a complete automated health audit on your decoupled WordPress and Astro environment:
+
+```bash
+npm run doctor        # Color-coded terminal diagnostic report
+npm run doctor -- --ci # Strict CI mode (exits with code 1 on failures)
+npm run doctor -- --json # Emits raw JSON report for CI/tooling
+```
+
+Audits:
+- **Environment & Configuration:** validates `.env`, domain formats, and secrets.
+- **Connectivity:** checks WordPress server ping, network latency, and `/wp-json/` index.
+- **REST Endpoints:** verifies `/posts`, `/pages`, `/categories`, and `/media`.
+- **AstroPress Connector Plugin:** checks plugin version, pretty permalinks (`/%postname%/`), and redirect status.
+- **SEO Plugins:** detects Yoast SEO / Rank Math and tests schema graph ingestion.
+- **Draft Preview:** tests secure handshake with `/wp-json/astropress/v1/preview`.
+- **Image Optimization:** checks `remotePatterns` configuration for WordPress uploads.
+
+A visual diagnostics dashboard is also available in your browser at [`/doctor`](/doctor).
 
 ## Draft Preview & Publishing Workflow
 

@@ -1,11 +1,12 @@
 import type { DoctorCategoryReport, DoctorCheck, DoctorRunnerOptions } from './types';
 
-function measureLatency<T>(fn: () => Promise<T>): Promise<{ result: T; latencyMs: number }> {
+async function measureLatency<T>(fn: () => Promise<T>): Promise<{ result: T; latencyMs: number }> {
   const start = Date.now();
-  return fn().then((result) => ({
+  const result = await fn();
+  return {
     result,
     latencyMs: Date.now() - start,
-  }));
+  };
 }
 
 function resolveCategoryStatus(checks: DoctorCheck[]): 'pass' | 'warn' | 'fail' {

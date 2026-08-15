@@ -1,4 +1,3 @@
-import { env } from '../../config/env';
 import {
   checkConnectivity,
   checkConnectorPlugin,
@@ -7,8 +6,8 @@ import {
   checkPreviewHandshake,
   checkRestEndpoints,
   checkSeoIngestion,
-} from './checks';
-import type { DoctorCategoryReport, DoctorReport, DoctorRunnerOptions } from './types';
+} from './checks.ts';
+import type { DoctorCategoryReport, DoctorReport, DoctorRunnerOptions } from './types.ts';
 
 export {
   checkConnectivity,
@@ -18,9 +17,9 @@ export {
   checkPreviewHandshake,
   checkRestEndpoints,
   checkSeoIngestion,
-} from './checks';
+} from './checks.ts';
 
-export type { CheckStatus, DoctorCategoryReport, DoctorCheck, DoctorReport, DoctorRunnerOptions } from './types';
+export type { CheckStatus, DoctorCategoryReport, DoctorCheck, DoctorReport, DoctorRunnerOptions } from './types.ts';
 
 /**
  * Runs the full suite of Headless Doctor diagnostic checks.
@@ -31,9 +30,9 @@ export type { CheckStatus, DoctorCategoryReport, DoctorCheck, DoctorReport, Doct
 export async function runDoctorDiagnostics(options: DoctorRunnerOptions = {}): Promise<DoctorReport> {
   const start = Date.now();
 
-  const resolvedWpUrl = options.wordpressUrl ?? (typeof process !== 'undefined' ? process.env.WORDPRESS_URL : undefined) ?? env.wordpressUrl.href;
-  const resolvedSiteUrl = options.siteUrl ?? (typeof process !== 'undefined' ? process.env.SITE_URL : undefined) ?? env.siteUrl.href;
-  const resolvedSecret = options.previewSecret ?? (typeof process !== 'undefined' ? process.env.ASTROPRESS_PREVIEW_SECRET : undefined) ?? env.previewSecret;
+  const resolvedWpUrl = options.wordpressUrl ?? (typeof process !== 'undefined' ? process.env.WORDPRESS_URL : undefined);
+  const resolvedSiteUrl = options.siteUrl ?? (typeof process !== 'undefined' ? process.env.SITE_URL : undefined);
+  const resolvedSecret = options.previewSecret ?? (typeof process !== 'undefined' ? process.env.ASTROPRESS_PREVIEW_SECRET : undefined);
 
   const resolvedOptions: DoctorRunnerOptions = {
     wordpressUrl: resolvedWpUrl,

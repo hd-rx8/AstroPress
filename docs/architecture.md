@@ -20,7 +20,7 @@ Content Layer                src/lib/wordpress/{posts,pages,categories,media,pre
 Astro routes & components     src/pages/**, src/components/**, src/layouts/**
     |  build (SSG) / on-demand (Draft Preview)
     v
-Static HTML / On-Demand Preview   dist/ / /preview
+Static HTML / On-Demand Preview   dist/ / /preview / /doctor
 ```
 
 ### WordPress's responsibility
@@ -159,3 +159,9 @@ Located in `wordpress/plugins/astropress-connector/`:
 - **Plugin REST Endpoint:** `GET /wp-json/astropress/v1/preview` safely pulls autosaves/revisions when given a valid `ASTROPRESS_PREVIEW_SECRET` (`hash_equals`).
 - **Astro Preview Route:** `src/pages/preview.astro` renders drafts live with `noindex,nofollow` robots protection, responsive header, and floating `<PreviewBanner />` toolbar linking back to `wp-admin`.
 - **Enriched Publishing Webhooks:** Dispatches structured JSON (`post_id`, `slug`, `status`, `previous_status`) with a local 5-entry deploy history log in WP admin.
+
+## Headless Doctor (Milestone 6)
+
+- **Automated Diagnostic Engine:** `src/lib/doctor/` executes 7 diagnostic check categories (Environment, Connectivity, REST Endpoints, AstroPress Connector, SEO Ingestion, Draft Preview, and Remote Images).
+- **CLI Runner:** `npm run doctor` outputs ANSI color-coded reports with checkmarks, latency metrics, actionable solutions, and `--ci` / `--json` support.
+- **Web Dashboard:** `/doctor` route provides an interactive visual dashboard for health monitoring.

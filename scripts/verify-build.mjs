@@ -30,6 +30,7 @@ const EXPECTED_FILES = [
   path.join('blog', 'hello-world', 'index.html'),
   path.join('about', 'index.html'),
   path.join('preview', 'index.html'),
+  path.join('doctor', 'index.html'),
   'robots.txt',
   'sitemap-index.xml',
   'sitemap-0.xml',
@@ -118,6 +119,13 @@ function verifyBuildOutput(distDir) {
   assert(
     /<meta name="robots" content="noindex,nofollow"/.test(previewHtml),
     'preview page is missing noindex,nofollow robots meta tag',
+  );
+
+  // 7. doctor page output includes noindex robots directive
+  const doctorHtml = read(path.join('doctor', 'index.html'));
+  assert(
+    /<meta name="robots" content="noindex,nofollow"/.test(doctorHtml),
+    'doctor page is missing noindex,nofollow robots meta tag',
   );
 }
 
