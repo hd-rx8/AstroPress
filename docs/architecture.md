@@ -9,27 +9,26 @@ dependency on WordPress once a build finishes.
 
 ```text
 WordPress (CMS)
-    |  REST API (/wp-json/wp/v2/*)
+    |  REST API (/wp-json/wp/v2/* and /wp-json/astropress/v1/*)
     v
 WordPress Client            src/lib/wordpress/client.ts
     |  raw JSON + X-WP-Total / X-WP-TotalPages
     v
-Content Layer                src/lib/wordpress/{posts,pages,categories,media,seo,normalizers,errors,pagination}.ts
+Content Layer                src/lib/wordpress/{posts,pages,categories,media,preview,seo,normalizers,errors,pagination}.ts
     |  typed, normalized Post / Page / Category / Media + Metadata
     v
 Astro routes & components     src/pages/**, src/components/**, src/layouts/**
-    |  build
+    |  build (SSG) / on-demand (Draft Preview)
     v
-Static HTML / Islands         dist/
+Static HTML / On-Demand Preview   dist/ / /preview
 ```
 
 ### WordPress's responsibility
 
 - Owns all editorial content: posts, pages, categories, media, authors.
-- Exposes it over the standard WordPress REST API. No custom plugin, no
-  GraphQL, no bespoke endpoints are required.
-- Is never queried at request time by a deployed build — only during
-  `astro build` / `astro dev`.
+- Exposes it over the standard WordPress REST API and the `astropress-connector` plugin endpoints.
+- Is never queried at request time by a deployed static build — only during
+  `astro build` / `astro dev` and on-demand draft preview requests.
 
 ### The WordPress Client's responsibility (`client.ts`)
 
@@ -56,6 +55,8 @@ Static HTML / Islands         dist/
   that same cached collection.
 - `media.ts` — the one non-aggregated lookup: `getMediaById(id)` fetches a
   single attachment record on demand.
+- `preview.ts` — `getDraftPreview(id, type, secret)` fetches an unpublished
+  draft post/page from the secure AstroPress Connector preview endpoint.
 - `seo.ts` — `getSeoData(...)`, the public entry point for building page
   metadata (title, description, canonical, robots, Open Graph, Twitter) with
   a 4-tier cascade (Yoast SEO > Rank Math > Native WordPress fields > Site Defaults).
@@ -68,7 +69,7 @@ Static HTML / Islands         dist/
   three distinct, greppable failure modes instead of one generic error.
 - `index.ts` — the one import surface Astro code should use:
   `getPosts`, `getPostBySlug`, `getPages`, `getPageBySlug`, `getCategories`,
-  `getMedia`, `getSeoData`, `getJsonLdGraph`, `buildBreadcrumbsJsonLd`, `buildWebsiteJsonLd`, plus every domain type.
+  `getMedia`, `getDraftPreview`, `getSeoData`, `getJsonLdGraph`, `buildBreadcrumbsJsonLd`, `buildWebsiteJsonLd`, plus every domain type.
 
 
 ### Astro's responsibility
@@ -84,8 +85,8 @@ Static HTML / Islands         dist/
 
 ## Data flow
 
-1. `.env` supplies `WORDPRESS_URL` and `SITE_URL`.
-2. `src/config/env.ts` validates both (absolute http(s), root-only path)
+1. `.env` supplies `WORDPRESS_URL`, `SITE_URL`, and optional `ASTROPRESS_PREVIEW_SECRET`.
+2. `src/config/env.ts` validates configuration (absolute http(s), root-only path)
    and derives `wordpressApiUrl` (`<WORDPRESS_URL>/wp-json/wp/v2`). A
    missing or malformed value throws immediately, naming the offending
    variable, rather than deferring to an obscure downstream fetch failure.
@@ -99,24 +100,22 @@ Static HTML / Islands         dist/
 
 ## Configuration
 
-Exactly two environment variables, validated at the same boundary
-(`src/config/env.ts`) the app and `astro.config.ts` both read from:
+Validated at the single boundary (`src/config/env.ts`):
 
 ```env
 WORDPRESS_URL=https://cms.example.com
 SITE_URL=https://www.example.com
+ASTROPRESS_PREVIEW_SECRET=your-shared-secret # Optional in SSG, required for /preview
 ```
 
 No WordPress domain is hardcoded anywhere in the source tree. Swapping to a
-different WordPress installation requires changing only these two values.
+different WordPress installation requires changing only these values.
 
 ## Rendering strategy
 
-Static site generation (SSG) only — every route in `src/pages/` is
-pre-rendered at build time from the content layer's already-fetched,
-already-normalized collections. New WordPress content requires a fresh
-`astro build` and redeploy; there is no SSR, ISR, or webhook-triggered
-rebuild in this milestone.
+Static site generation (SSG) for all public pages (`src/pages/`), with on-demand
+rendering (`export const prerender = false`) specifically for the draft preview
+route (`src/pages/preview.astro`).
 
 ## Where JavaScript can and cannot be introduced
 
@@ -154,4 +153,9 @@ Located in `wordpress/plugins/astropress-connector/`:
 - **Deploy Webhook Dispatcher:** Automatically dispatches non-blocking POST requests to Vercel/Netlify/GitHub Actions on post/page lifecycle transitions with a 30s debounce. Adds a manual "🚀 Rebuild Site" button in the admin bar.
 - **Health REST Endpoint:** Exposes `GET /wp-json/astropress/v1/health` providing automated diagnostics on permalinks, active SEO plugins, frontend URL status, and core REST endpoints.
 
+## Draft Preview & Publishing Workflow (Milestone 5)
 
+- **Secure Preview Handshake:** Gutenberg/Classic editor preview buttons generate tokenized links to `/preview?id={id}&type={type}&secret={secret}`.
+- **Plugin REST Endpoint:** `GET /wp-json/astropress/v1/preview` safely pulls autosaves/revisions when given a valid `ASTROPRESS_PREVIEW_SECRET` (`hash_equals`).
+- **Astro Preview Route:** `src/pages/preview.astro` renders drafts live with `noindex,nofollow` robots protection, responsive header, and floating `<PreviewBanner />` toolbar linking back to `wp-admin`.
+- **Enriched Publishing Webhooks:** Dispatches structured JSON (`post_id`, `slug`, `status`, `previous_status`) with a local 5-entry deploy history log in WP admin.

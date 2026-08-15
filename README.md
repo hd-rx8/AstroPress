@@ -21,12 +21,10 @@ WordPress stays the editorial system of record. Astro reads content from the Wor
 │    Astro    │
 │  Frontend   │
 └──────┬──────┘
-       │ build
+       │ build (SSG) / on-demand (Draft Preview)
        ▼
-   Static HTML
+   Static HTML / Live Preview
 ```
-
-This is version 1: **static site generation (SSG) only.** There is no server-side rendering, no hybrid rendering, and no webhook-triggered rebuilds. Publishing new WordPress content requires re-running the Astro build and redeploying the output. See [SSG and the rebuild limitation](#ssg-and-the-rebuild-limitation) below.
 
 ## The content layer
 
@@ -35,7 +33,7 @@ through one import: `src/lib/wordpress/index.ts`. Pages never call `fetch`
 against WordPress directly.
 
 ```ts
-import { getPosts, getPostBySlug, getPages, getPageBySlug, getCategories, getMedia, getSeoData } from '../lib/wordpress';
+import { getPosts, getPostBySlug, getPages, getPageBySlug, getCategories, getMedia, getDraftPreview, getSeoData } from '../lib/wordpress';
 
 const { posts, pagination } = await getPosts({ page: 1, perPage: 12 });
 const post = await getPostBySlug('hello-world');
@@ -51,7 +49,6 @@ allowed.
 
 ## Quick start (existing WordPress installation)
 
-
 If you already have a WordPress site — self-hosted or managed — with the REST API reachable, this is all you need:
 
 ```bash
@@ -59,15 +56,17 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env` and set the two required variables:
+Edit `.env` and set the required variables:
 
 ```env
 WORDPRESS_URL=https://cms.example.com
 SITE_URL=https://www.example.com
+ASTROPRESS_PREVIEW_SECRET=your-shared-secret
 ```
 
 - `WORDPRESS_URL` — the base URL of your WordPress installation (no `/wp-json` suffix, no trailing slash). The starter derives `/wp-json/wp/v2` from it internally.
-- `SITE_URL` — the public URL this Astro site will be served from. It drives canonical URLs, Open Graph/Twitter tags, JSON-LD, the sitemap, and `robots.txt`. It must be a domain or subdomain **root** (no path): V1 does not support serving the site from a subpath such as `https://example.com/blog`, and rejects such a value with an explicit error rather than silently generating URLs that drop the subpath.
+- `SITE_URL` — the public URL this Astro site will be served from. It drives canonical URLs, Open Graph/Twitter tags, JSON-LD, the sitemap, and `robots.txt`. It must be a domain or subdomain **root** (no path).
+- `ASTROPRESS_PREVIEW_SECRET` — shared secret token for authenticating on-demand draft preview requests from WordPress.
 
 Then run:
 
@@ -76,8 +75,6 @@ npm run dev
 ```
 
 Both variables are validated on startup and on build. A missing or malformed URL fails immediately with an actionable error rather than producing a broken site.
-
-These two variables are the entire V1 configuration contract — there is no alternate REST base URL, SEO override, social-handle, default-image, or site-name environment variable.
 
 ## Optional: local WordPress with Docker
 
@@ -90,22 +87,23 @@ docker compose up -d
 This starts:
 
 - `wordpress` on `127.0.0.1:8080`
-- `mysql`, reachable only from the `wordpress` container over the Compose network (root/user/password all `wordpress`, database `wordpress`). It deliberately publishes no host port, so it cannot collide with a MySQL you already run locally.
+- `mysql`, reachable only from the `wordpress` container over the Compose network (root/user/password all `wordpress`, database `wordpress`).
 
 Then:
 
-1. Open `http://localhost:8080` and complete the WordPress installation wizard (site title, admin user, admin password).
-2. Log in to `/wp-admin` and manually create a small number of demo posts and at least one page. There is no automated seed data — V1 deliberately ships no import script, fixture content, or complex Docker orchestration.
+1. Open `http://localhost:8080` and complete the WordPress installation wizard.
+2. Log in to `/wp-admin` and manually create demo posts and pages.
 3. Set your `.env`:
 
    ```env
    WORDPRESS_URL=http://localhost:8080
    SITE_URL=http://localhost:4321
+   ASTROPRESS_PREVIEW_SECRET=local-dev-secret
    ```
 
 4. Run `npm run dev` as usual.
 
-To stop and remove the containers (data persists in named volumes until you also remove them):
+To stop and remove the containers:
 
 ```bash
 docker compose down
@@ -127,10 +125,6 @@ Posts are fetched from the native WordPress REST API with `_embed` so featured i
 
 Individual post routes do **not** re-fetch a single post by slug at build time — they're served from the already-aggregated collection.
 
-Pages use only the native `pages` endpoint needed to discover and retrieve pages by slug. Category and author REST endpoints are not used in V1.
-
-Normalizers extract only the fields the frontend needs (identity, slug, title, excerpt, HTML content, date, optional featured image, optional author) and turn the raw, deeply-nested `_embedded` REST shape into plain `Post`/`Page` models. That raw shape never reaches layouts or components.
-
 ### Routes
 
 ```text
@@ -139,14 +133,20 @@ Normalizers extract only the fields the frontend needs (identity, slug, title, e
 /blog/page/[number]/  subsequent post pages
 /blog/[slug]/         individual post
 /[slug]/              individual WordPress page
+/preview              on-demand draft preview route (requires secret)
 /robots.txt
 ```
 
 `/blog/` is the single canonical route for page one of posts; numbered pagination starts at `/blog/page/2/`. If a WordPress page slug collides with a route the framework owns (`blog`, or the generated `robots.txt`), the build fails and names the conflicting slug rather than silently producing an ambiguous route.
 
-## SSG and the rebuild limitation
+## Draft Preview & Publishing Workflow
 
-This starter renders content **once, at build time**. If you publish, edit, or delete something in WordPress, the live static site does not change until you rebuild and redeploy Astro. There is no webhook, polling, or incremental revalidation in V1 — a rebuild is the only way to reflect new WordPress content. Automated rebuild triggers (e.g. a WordPress webhook calling your CI) are a roadmap idea, not something this starter provides.
+The starter provides real-time editorial preview for unpublished posts and pages:
+
+- **WordPress Preview Button:** Editors click "Preview" in WordPress and are immediately redirected to the Astro frontend with live changes rendered.
+- **Preview Banner Toolbar:** Floating indicator bar shows draft status, post ID, and provides a 1-click link back to `wp-admin` editor.
+- **Search Engine Safe:** Automatically injects `<meta name="robots" content="noindex,nofollow" />` on all preview renderings.
+- **Deploy Webhook Dispatcher:** Publishes trigger debounced rebuild webhooks (with structured event metadata) and logs deploy history in WordPress admin.
 
 ## SEO & Structured Data
 
@@ -165,26 +165,25 @@ Remote WordPress images are processed at build time using Astro's `<Image />` co
 
 - Dynamic `remotePatterns` in `astro.config.ts` authorize remote WordPress uploads from `WORDPRESS_URL`.
 - Responsive `widths` and `sizes` generate optimized modern WebP/AVIF formats at build time with zero client runtime overhead.
-- Featured images on detail pages use `loading="eager"` and `fetchpriority="high"` for superior LCP (Largest Contentful Paint).
-
+- Featured images on detail pages use `loading="eager"` and `fetchpriority="high"` for superior LCP.
 
 ## Trusted HTML and page-builder fidelity
 
-WordPress's `content.rendered` is rendered with Astro's `set:html`. **This means the configured WordPress installation is treated as a trusted editorial source.** Do not point `WORDPRESS_URL` at a WordPress installation whose content you do not control or trust — arbitrary HTML from an untrusted source rendered this way is a cross-site-scripting risk. The starter does not sanitize or transform this HTML in V1.
+WordPress's `content.rendered` is rendered with Astro's `set:html`. **This means the configured WordPress installation is treated as a trusted editorial source.** Do not point `WORDPRESS_URL` at a WordPress installation whose content you do not control or trust. The starter does not sanitize or transform this HTML in V1.
 
-Gutenberg-authored content works naturally, to the degree it's returned by the REST API. **Elementor and other page-builder markup is preserved as-is, but visual fidelity is not promised**: page builders typically depend on their own frontend CSS, JavaScript, and asset pipelines that are not automatically carried into the Astro frontend. There is no custom Gutenberg renderer, no Elementor support layer, and no page-builder asset pipeline. The bundled content styles provide restrained, readable defaults for common semantic HTML — they are not an emulation of any WordPress theme or page builder.
+Gutenberg-authored content works naturally, to the degree it's returned by the REST API. **Elementor and other page-builder markup is preserved as-is, but visual fidelity is not promised**: page builders typically depend on their own frontend CSS, JavaScript, and asset pipelines.
 
 ## WordPress Connector Plugin
 
 The starter includes an optional, lightweight WordPress plugin located in [`wordpress/plugins/astropress-connector`](wordpress/plugins/astropress-connector/README.md):
 
+- **Real-Time Draft Previews:** Instant tokenized preview handshake with Astro.
 - **Automatic Frontend Redirects:** Routes visitors accessing the WordPress domain directly to your Astro site.
 - **Admin Link Rewriting:** "View Post", "View Page", and "Visit Site" in `wp-admin` open your Astro frontend.
-- **Deploy Hooks & Debouncing:** Dispatches rebuild webhooks to Vercel/Netlify upon publishing/updating content, with a 30s debounce and a manual "🚀 Rebuild Site" button in the admin bar.
+- **Deploy Hooks & Debouncing:** Dispatches rebuild webhooks upon publishing/updating content, with a 30s debounce, deploy history table, and manual "🚀 Rebuild Site" button.
 - **Health Check REST API:** `GET /wp-json/astropress/v1/health` for automated diagnostics.
 
 ## Tests, CI, and static deployment
-
 
 ```bash
 npm test          # unit + integration tests (Vitest)
@@ -193,33 +192,14 @@ npm run lint      # eslint
 npm run build:ci  # build smoke test against a local fixture WordPress server
 ```
 
-`npm run build:ci` never touches a public WordPress instance — it starts an in-memory fixture REST server for the duration of the build only, so it works offline and in CI. This is test infrastructure, not a runtime mock mode; it plays no role in `npm run dev` or `npm run build` against real WordPress.
-
-CI runs type checking, linting, tests, and the smoke build on `push` and `pull_request`.
-
-Because the output of `npm run build` is a static `dist/` directory, the site can be deployed to any static host or CDN (Netlify, Vercel static hosting, Cloudflare Pages, GitHub Pages, S3 + CloudFront, etc.) with no Node.js server required at runtime.
-
-## What this starter is not (V1 scope)
-
-This is a deliberately small starter. The following are explicitly **out of scope for V1** and are not partially implemented anywhere in the codebase:
-
-- **Rendering modes:** no SSR, no hybrid rendering, no rebuild webhooks or any other automated rebuild trigger.
-- **Content types and routes:** no public category or author archive routes; no comments; no search; no multilingual content.
-- **Media:** no dedicated media client, no rich media handling, and no REST calls beyond what post/page normalization needs.
-- **Editorial HTML:** no HTML sanitization, no custom Gutenberg block renderer, no Elementor (or other page-builder) support layer, no page-builder asset transport.
-- **APIs and integrations:** no GraphQL or WPGraphQL, no authentication, no editorial preview mode, no WooCommerce, no analytics, no dashboards, no custom WordPress plugin.
-- **Local infrastructure:** no seed data, no content import script, no complex Docker orchestration, no databases beyond the optional local WordPress/MySQL pair, no browser/E2E test suite.
-- **Abstraction:** no generic CMS abstraction, no multi-CMS provider system, and this is not a framework or a monorepo.
-
-## Roadmap candidates
-
-These are future ideas, not commitments, and each needs a concrete user need and its own design cycle before it happens: deploy webhooks, SSR/hybrid rendering, an HTML sanitization strategy, category/author archives, richer media handling, editorial preview, and page-builder compatibility work.
+`npm run build:ci` never touches a public WordPress instance — it starts an in-memory fixture REST server for the duration of the build only, so it works offline and in CI.
 
 ## Configuration reference
 
 ```env
 WORDPRESS_URL=https://cms.example.com
 SITE_URL=https://www.example.com
+ASTROPRESS_PREVIEW_SECRET=your-shared-secret
 ```
 
 See [`.env.example`](./.env.example).

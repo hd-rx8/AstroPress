@@ -29,6 +29,7 @@ const EXPECTED_FILES = [
   path.join('blog', 'index.html'),
   path.join('blog', 'hello-world', 'index.html'),
   path.join('about', 'index.html'),
+  path.join('preview', 'index.html'),
   'robots.txt',
   'sitemap-index.xml',
   'sitemap-0.xml',
@@ -110,6 +111,13 @@ function verifyBuildOutput(distDir) {
   assert(
     /<meta property="og:type" content="article"/.test(postHtml),
     'post page og:type is not "article"',
+  );
+
+  // 6. preview page output includes noindex robots directive
+  const previewHtml = read(path.join('preview', 'index.html'));
+  assert(
+    /<meta name="robots" content="noindex,nofollow"/.test(previewHtml),
+    'preview page is missing noindex,nofollow robots meta tag',
   );
 }
 

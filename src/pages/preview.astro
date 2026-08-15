@@ -1,112 +1,151 @@
 ---
 /**
- * On-demand Draft Preview route.
+ * Static Draft Preview route.
  *
- * Renders unpublished WordPress posts and pages dynamically with live revisions,
- * strict noindex SEO directives, and an editorial PreviewBanner toolbar.
+ * Statically built as /preview/index.html. At runtime, a lightweight client script
+ * reads ?id=...&secret=...&type=... from the URL and fetches live draft content
+ * from the WordPress REST API endpoint (/wp-json/astropress/v1/preview).
  */
-export const prerender = false;
-
-import { Image } from 'astro:assets';
-import PostContent from '../components/PostContent.astro';
 import PreviewBanner from '../components/PreviewBanner.astro';
 import { env } from '../config/env';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getDraftPreview, getSeoData } from '../lib/wordpress';
-import type { Page, Post } from '../lib/wordpress';
-
-const idParam = Astro.url.searchParams.get('id');
-const typeParam = Astro.url.searchParams.get('type');
-const secret = Astro.url.searchParams.get('secret') ?? '';
-
-const type: 'post' | 'page' = typeParam === 'page' ? 'page' : 'post';
-const postId = idParam ? parseInt(idParam, 10) : NaN;
-
-let draft: Post | Page | null = null;
-let errorMessage: string | null = null;
-
-if (isNaN(postId) || postId <= 0) {
-  errorMessage = 'ID de post/página inválido ou não fornecido.';
-  Astro.response.status = 400;
-} else {
-  try {
-    draft = await getDraftPreview(postId, type, secret);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (message.includes('401') || message.includes('secret') || message.includes('forbidden')) {
-      errorMessage = 'Acesso não autorizado: chave secreta de preview inválida ou ausente.';
-      Astro.response.status = 401;
-    } else {
-      errorMessage = `Não foi possível carregar o rascunho #${postId}. Verifique se o post existe no WordPress.`;
-      Astro.response.status = 404;
-    }
-  }
-}
+import { getSeoData } from '../lib/wordpress';
 
 const metadata = getSeoData({
-  title: draft ? `[Preview] ${draft.title}` : 'Visualização de Rascunho',
-  description: draft?.excerpt ?? 'Pré-visualização de conteúdo em rascunho.',
-  path: `/preview?id=${idParam ?? ''}`,
+  title: 'Pré-visualização de Rascunho',
+  description: 'Visualização em tempo real de rascunhos do WordPress no Astro.',
+  path: '/preview/',
   robots: 'noindex,nofollow',
 });
 
-const isPost = (item: Post | Page): item is Post => 'author' in item || 'featuredImage' in item;
-const editUrl = `${env.wordpressUrl.origin}/wp-admin/post.php?post=${postId}&action=edit`;
+const wordpressOrigin = env.wordpressUrl.origin;
 ---
 
 <BaseLayout metadata={metadata}>
-  {
-    errorMessage ? (
-      <div class="prose" style="text-align: center; padding-block: 4rem;">
-        <h1 style="color: #dc2626;">⚠️ Erro de Visualização</h1>
-        <p>{errorMessage}</p>
-        <p style="margin-top: 2rem;">
-          <a href="/" class="btn btn--primary">Voltar para a Página Inicial</a>
+  <div id="preview-wrapper">
+    <div id="preview-banner-container" style="display: none;">
+      <PreviewBanner postId={0} postType="post" editUrl="#" />
+    </div>
+
+    <div id="preview-loading" class="prose" style="text-align: center; padding-block: 4rem;">
+      <p style="font-size: 1.25rem; color: var(--color-muted);">⏳ Carregando rascunho em tempo real...</p>
+    </div>
+
+    <div id="preview-error" class="prose" style="display: none; text-align: center; padding-block: 4rem;">
+      <h1 style="color: #dc2626;">⚠️ Erro de Visualização</h1>
+      <p id="preview-error-message"></p>
+      <p style="margin-top: 2rem;">
+        <a href="/" class="btn btn--primary">Voltar para a Página Inicial</a>
+      </p>
+    </div>
+
+    <article id="preview-content" style="display: none;">
+      <header class="page-header">
+        <h1 id="preview-title" class="page-header__title"></h1>
+        <p class="page-header__meta">
+          <time id="preview-date"></time>
+          <span id="preview-author"></span>
         </p>
-      </div>
-    ) : draft ? (
-      <>
-        <PreviewBanner postId={postId} postType={type} editUrl={editUrl} />
-        <article>
-          <header class="page-header">
-            <h1 class="page-header__title">{draft.title}</h1>
-            <p class="page-header__meta">
-              <time datetime={draft.date}>
-                {new Date(draft.date).toLocaleDateString('pt-BR', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </time>
-              {isPost(draft) && draft.author && <> · {draft.author.name}</>}
-            </p>
-            {isPost(draft) && draft.featuredImage && (
-              <div class="page-header__image">
-                {draft.featuredImage.width && draft.featuredImage.height ? (
-                  <Image
-                    src={draft.featuredImage.url}
-                    alt={draft.featuredImage.alt}
-                    width={draft.featuredImage.width}
-                    height={draft.featuredImage.height}
-                    widths={[480, 800, 1200]}
-                    sizes="(max-width: 800px) 100vw, 800px"
-                    loading="eager"
-                    decoding="async"
-                  />
-                ) : (
-                  <img
-                    src={draft.featuredImage.url}
-                    alt={draft.featuredImage.alt}
-                    loading="eager"
-                    decoding="async"
-                  />
-                )}
-              </div>
-            )}
-          </header>
-          <PostContent html={draft.content} />
-        </article>
-      </>
-    ) : null
-  }
+        <div id="preview-image-container" class="page-header__image" style="display: none;">
+          <img id="preview-image" src="" alt="" loading="eager" decoding="async" />
+        </div>
+      </header>
+      <article id="preview-body" class="prose"></article>
+    </article>
+  </div>
+
+  <script is:inline define:vars={{ wordpressOrigin }}>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const type = params.get('type') || 'post';
+      const secret = params.get('secret');
+
+      const loadingEl = document.getElementById('preview-loading');
+      const errorEl = document.getElementById('preview-error');
+      const errorMsgEl = document.getElementById('preview-error-message');
+      const contentEl = document.getElementById('preview-content');
+      const bannerContainer = document.getElementById('preview-banner-container');
+      const titleEl = document.getElementById('preview-title');
+      const dateEl = document.getElementById('preview-date');
+      const authorEl = document.getElementById('preview-author');
+      const imageContainer = document.getElementById('preview-image-container');
+      const imageEl = document.getElementById('preview-image');
+      const bodyEl = document.getElementById('preview-body');
+
+      function showError(msg) {
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (contentEl) contentEl.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'block';
+        if (errorMsgEl) errorMsgEl.textContent = msg;
+      }
+
+      if (!id || !secret) {
+        showError('Parâmetros de preview incompletos. Forneça o ID e o token de acesso.');
+        return;
+      }
+
+      const endpoint = `${wordpressOrigin}/wp-json/astropress/v1/preview?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&secret=${encodeURIComponent(secret)}`;
+
+      fetch(endpoint)
+        .then((res) => {
+          if (res.status === 401) {
+            throw new Error('Chave secreta de preview inválida ou não autorizada.');
+          }
+          if (!res.ok) {
+            throw new Error(`Rascunho #${id} não encontrado no WordPress.`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (loadingEl) loadingEl.style.display = 'none';
+          if (bannerContainer) bannerContainer.style.display = 'block';
+          if (contentEl) contentEl.style.display = 'block';
+
+          // Update banner info
+          const editBtn = bannerContainer.querySelector('.preview-toolbar__btn--edit');
+          if (editBtn) {
+            editBtn.href = `${wordpressOrigin}/wp-admin/post.php?post=${encodeURIComponent(id)}&action=edit`;
+          }
+          const label = bannerContainer.querySelector('.preview-toolbar__label');
+          if (label) {
+            label.textContent = `${type.toUpperCase()} #${id} — Pré-visualização`;
+          }
+
+          // Populate content
+          if (titleEl && data.title) {
+            titleEl.textContent = data.title.rendered || 'Sem título';
+            document.title = `[Preview] ${data.title.rendered || 'Rascunho'} | AstroPress`;
+          }
+
+          if (dateEl && data.date) {
+            const parsedDate = new Date(data.date);
+            dateEl.textContent = parsedDate.toLocaleDateString('pt-BR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+            dateEl.setAttribute('datetime', data.date);
+          }
+
+          if (authorEl && data._embedded?.author?.[0]?.name) {
+            authorEl.textContent = ` · ${data._embedded.author[0].name}`;
+          }
+
+          const featuredMedia = data._embedded?.['wp:featuredmedia']?.[0];
+          if (featuredMedia?.source_url && imageContainer && imageEl) {
+            imageEl.src = featuredMedia.source_url;
+            imageEl.alt = featuredMedia.alt_text || '';
+            imageContainer.style.display = 'block';
+          }
+
+          if (bodyEl && data.content) {
+            bodyEl.innerHTML = data.content.rendered || '';
+          }
+        })
+        .catch((err) => {
+          showError(err.message || 'Falha ao conectar com o WordPress para carregar o rascunho.');
+        });
+    })();
+  </script>
 </BaseLayout>
