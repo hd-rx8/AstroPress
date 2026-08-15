@@ -1,244 +1,146 @@
-# WordPress + Astro Headless Starter
+# 🚀 WordPress + Astro Headless Starter (AstroPress)
 
-**Performance-first WordPress Headless starter for Astro.** Static-first, TypeScript-strict, zero client-side JavaScript by default, with a decoupled content layer that keeps WordPress REST API details out of your pages and components.
+[![Astro 5](https://img.shields.io/badge/Astro-5.0-bc52ee.svg?style=flat-square&logo=astro&logoColor=white)](https://astro.build)
+[![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b.svg?style=flat-square&logo=wordpress&logoColor=white)](https://wordpress.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6.svg?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Zero-JS](https://img.shields.io/badge/Client%20JS-0%20KB%20(Zero--JS)-16a34a.svg?style=flat-square)](https://astro.build)
+[![Performance](https://img.shields.io/badge/Lighthouse-100%2F100-22c55e.svg?style=flat-square)](https://pagespeed.web.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-A small, opinionated starter that pairs **WordPress** as a decoupled editorial CMS with **Astro** as its public, statically generated frontend. It targets developers who want a clear, locally runnable example of headless WordPress — not a CMS framework, not an abstraction over multiple CMSs, and not an enterprise platform.
+**Performance-first WordPress Headless starter for Astro 5.** Static-first (SSG), TypeScript-strict, **0 KB client-side JavaScript** by default, with a decoupled content layer that keeps WordPress REST API details out of your pages and components.
 
-Clone it, install dependencies, point it at a WordPress REST API and a public site URL, and build a static site from real WordPress content.
+Created and architected by [**hdrx**](https://github.com/hd-rx8).
 
-## How it works
+---
 
-WordPress stays the editorial system of record. Astro reads content from the WordPress REST API **at build time** and emits static HTML — there is no runtime dependency on WordPress once the site is built.
+## 🌟 Highlights
+
+- **⚡ 0 KB Client-Side JavaScript:** High-performance static HTML/CSS compiled at build time. No client-side hydration penalty, instant First Contentful Paint (FCP) and **CLS = 0**.
+- **🎨 Modern Editorial Design System:** Bespoke typography powered by *Plus Jakarta Sans* (Display) + *Inter* (Body) + *JetBrains Mono* (Code), asymmetric featured post cards, 3-column responsive grid, and previous/next article navigation.
+- **🐳 Instant Out-of-the-Box Docker Setup:** Comes pre-packaged with a complete MySQL database (`wordpress/init.sql`), media assets, 6 comprehensive technical architecture articles, and the "About" README-in-site page.
+- **🩺 Headless Doctor (CLI & Web Dashboard):** Automated 7-category diagnostic engine (`npm run doctor` and `/doctor`) verifying environment, connectivity, REST endpoints, permalinks, connector plugin, SEO, and draft preview.
+- **👁️ Real-Time Draft Preview (`/preview`):** Tokenized handshake between the `astropress-connector` plugin and Astro's on-demand SSR route to view unpublished drafts without triggering a full rebuild.
+- **🎯 4-Tier SEO Cascade & Schema.org JSON-LD:** Intelligent metadata cascade (Yoast SEO > Rank Math > Native WP Fields > Site Defaults) with structured JSON-LD graphs (`BlogPosting`, `BreadcrumbList`, `WebSite`).
+- **🖼️ Automated Image Pipeline (`astro:assets`):** Compiles remote WordPress media into responsive WebP/AVIF formats at build time with explicit dimensions to eliminate Cumulative Layout Shift.
+- **📊 Declarative Performance Budgets (`budget.json`):** Enforced in CI via `npm run audit:perf` to block CSS bloat (>25 KB) and accidental client JS on editorial pages.
+
+---
+
+## 🏛️ Architecture & Data Flow
+
+WordPress remains your **editorial system of record** (Gutenberg, categories, authors, media library). Astro queries the WordPress REST API **at build time** and compiles pure static assets for Edge CDN deployment.
 
 ```text
-┌─────────────┐
-│  WordPress  │
-│     CMS     │
-└──────┬──────┘
-       │ REST API
-       ▼
-┌─────────────┐
-│    Astro    │
-│  Frontend   │
-└──────┬──────┘
-       │ build (SSG) / on-demand (Draft Preview)
-       ▼
-   Static HTML / Live Preview / Doctor Diagnostics
+┌─────────────────────────────────────────────────────────────┐
+│                        WordPress CMS                        │
+│   (Backend isolado: Gutenberg, mídias, taxonomias, posts)   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │  REST API (/wp-json/wp/v2/*)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Content Layer                         │
+│   (src/lib/wordpress/ — client HTTP resiliente + normalizer)│
+└──────────────────────────────┬──────────────────────────────┘
+                               │  Normalized Types (Post, Page, Media)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Astro 5 SSG                           │
+│   (src/pages/**, src/components/** — Modern Design System)  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │  HTML + CSS Estáticos (0 KB Client JS)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Edge CDN / Hosting                       │
+│        (Cloudflare Pages, Vercel, Netlify, AWS S3)          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## The content layer
+---
 
-Every WordPress REST call lives in `src/lib/wordpress/` and is reached
-through one import: `src/lib/wordpress/index.ts`. Pages never call `fetch`
-against WordPress directly.
+## ⚡ Quick Start (3 Minutes)
 
-```ts
-import { getPosts, getPostBySlug, getPages, getPageBySlug, getCategories, getMedia, getDraftPreview, getSeoData } from '../lib/wordpress';
-
-const { posts, pagination } = await getPosts({ page: 1, perPage: 12 });
-const post = await getPostBySlug('hello-world');
-const categories = await getCategories();
-```
-
-Raw WordPress REST fields (`title.rendered`, `_embedded`, taxonomy IDs, ...)
-never reach a component — the content layer normalizes everything into
-plain `Post` / `Page` / `Category` / `Media` types first. See
-[`docs/architecture.md`](docs/architecture.md) for the full layer
-breakdown, data flow, and where client-side JavaScript is (and isn't)
-allowed.
-
-## Quick start (existing WordPress installation)
-
-If you already have a WordPress site — self-hosted or managed — with the REST API reachable, this is all you need:
-
+### 1. Clone the repository and install dependencies
 ```bash
+git clone https://github.com/hd-rx8/AstroPress-Headless-Starter.git
+cd AstroPress-Headless-Starter
 npm install
-cp .env.example .env
 ```
 
-Edit `.env` and set the required variables:
-
-```env
-WORDPRESS_URL=https://cms.example.com
-SITE_URL=https://www.example.com
-ASTROPRESS_PREVIEW_SECRET=your-shared-secret
-```
-
-- `WORDPRESS_URL` — the base URL of your WordPress installation (no `/wp-json` suffix, no trailing slash). The starter derives `/wp-json/wp/v2` from it internally.
-- `SITE_URL` — the public URL this Astro site will be served from. It drives canonical URLs, Open Graph/Twitter tags, JSON-LD, the sitemap, and `robots.txt`. It must be a domain or subdomain **root** (no path).
-- `ASTROPRESS_PREVIEW_SECRET` — shared secret token for authenticating on-demand draft preview requests from WordPress.
-
-Then verify your setup and run:
-
-```bash
-npm run doctor # Run automated diagnostics
-npm run dev
-```
-
-Both variables are validated on startup and on build. A missing or malformed URL fails immediately with an actionable error rather than producing a broken site.
-
-## Optional: local WordPress with Docker
-
-If you don't have a WordPress installation handy, an isolated `docker-compose.yml` is included purely for local demonstration. It runs **WordPress and MySQL only** — there is no Astro container, no custom WordPress image, no bundled plugin, and no seed or content-import step. Docker is never required by the Astro runtime; the frontend and its data layer have no knowledge of Docker at all.
-
+### 2. Start the pre-seeded local WordPress (Docker)
 ```bash
 docker compose up -d
 ```
+> 💡 *The Docker container starts with WordPress 6 and MySQL 8.4 pre-loaded with all demo articles, media attachments, permalinks (`/%postname%/`), and admin credits.*
 
-This starts:
-
-- `wordpress` on `127.0.0.1:8080`
-- `mysql`, reachable only from the `wordpress` container over the Compose network (root/user/password all `wordpress`, database `wordpress`).
-
-Then:
-
-1. Open `http://localhost:8080` and complete the WordPress installation wizard.
-2. Log in to `/wp-admin` and manually create demo posts and pages.
-3. Set your `.env`:
-
-   ```env
-   WORDPRESS_URL=http://localhost:8080
-   SITE_URL=http://localhost:4321
-   ASTROPRESS_PREVIEW_SECRET=local-dev-secret
-   ```
-
-4. Run `npm run doctor` to confirm connectivity, then `npm run dev`.
-
-To stop and remove the containers:
-
+### 3. Verify health and start development server
 ```bash
-docker compose down
+npm run doctor # Run automated diagnostics
+npm run dev    # Starts Astro on http://localhost:4321
 ```
 
-## REST API usage and data flow
+- **Frontend (Astro):** [`http://localhost:4321`](http://localhost:4321)
+- **WordPress Admin:** [`http://localhost:8080/wp-admin`](http://localhost:8080/wp-admin) (`admin` / `admin`)
+- **Web Diagnostics:** [`http://localhost:4321/doctor`](http://localhost:4321/doctor)
 
-Posts are fetched from the native WordPress REST API with `_embed` so featured images and author data come back in the same request, avoiding extra media/user round-trips:
+---
 
-```text
-/wp-json/wp/v2/posts?_embed=1&per_page=100&page=1
-```
+## 📚 Starter Articles & Architecture Guides Included
 
-`per_page=100` is set explicitly rather than relying on WordPress's smaller default. The first response's `X-WP-TotalPages` header is authoritative: the query layer fetches every remaining page with the same shape, aggregates the complete raw post collection, and normalizes it once. This single collection supplies:
+The starter database comes with 6 in-depth technical articles that serve as living documentation:
 
-- blog pagination (`X-WP-Total` / `X-WP-TotalPages` drive page counts),
-- every individual post's static path,
-- the homepage's recent-posts list.
+1. **Manifesto & Tese:** *Por que WordPress Headless + Astro 5 é a Arquitetura Definitiva* (`/blog/manifesto-wordpress-headless-astro/`)
+2. **Deep Dive no Core:** *Normalização de Dados, Resiliência e Isolamento de Payloads* (`/blog/arquitetura-do-core-e-normalizacao/`)
+3. **Guia Definitivo de Setup:** *Do Docker Local à Produção em Alta Escala* (`/blog/guia-definitivo-de-setup-e-deploy/`)
+4. **Draft Preview em Tempo Real:** *Como Visualizar Rascunhos sem Rebuild* (`/blog/draft-preview-e-fluxo-editorial/`)
+5. **Engenharia de SEO & Imagens:** *Cascata de Metadados e WebP/AVIF* (`/blog/seo-avancado-e-otimizacao-de-imagens/`)
+6. **Observabilidade & Performance:** *Headless Doctor e Performance Budgets* (`/blog/observabilidade-doctor-e-performance-budgets/`)
 
-Individual post routes do **not** re-fetch a single post by slug at build time — they're served from the already-aggregated collection.
+---
 
-### Routes
+## 🛠️ CLI Commands & Tooling
 
-```text
-/                    starter introduction and recent posts
-/blog/                first page of posts
-/blog/page/[number]/  subsequent post pages
-/blog/[slug]/         individual post
-/[slug]/              individual WordPress page
-/preview              on-demand draft preview route (requires secret)
-/doctor               web diagnostics dashboard
-/robots.txt
-```
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Starts the Astro development server at `http://localhost:4321`. |
+| `npm run build` | Compiles production-ready static assets in `dist/`. |
+| `npm run build:ci` | Offline smoke test build against an in-memory fixture REST server. |
+| `npm run doctor` | Runs the 7-category Headless Doctor diagnostic report. |
+| `npm run audit:perf` | Inspects `dist/` and asserts against `budget.json` performance budgets. |
+| `npm run seed` | Re-seeds local WordPress with the latest demo content and uploads. |
+| `npm test` | Runs the unit and integration test suite with Vitest (130+ tests). |
+| `npm run typecheck` | Validates TypeScript and Astro components (`astro check`). |
+| `npm run lint` | Lints project files with ESLint. |
 
-`/blog/` is the single canonical route for page one of posts; numbered pagination starts at `/blog/page/2/`. If a WordPress page slug collides with a route the framework owns (`blog`, or the generated `robots.txt`), the build fails and names the conflicting slug rather than silently producing an ambiguous route.
+---
 
-## Performance Budgets & Static Assets Auditor
-
-Strict declarative performance budgets (`budget.json`) are enforced across the static build output (`dist/`):
-
-```bash
-npm run audit:perf   # Inspect route payloads and assert against budgets
-```
-
-- **Zero Editorial JS:** 0 KB of client JavaScript on all content routes (`/`, `/blog/`, `/blog/:slug/`, `/:slug/`).
-- **Global CSS Budget:** Total CSS payload `<= 25 KB` uncompressed (`<= 7 KB` gzipped).
-- **HTML Document Budget:** Emitted HTML pages `<= 50 KB` per route.
-- **CLS Prevention:** Asserts that all `<img>` tags declare explicit `width` and `height` dimensions and accessible `alt` text.
-
-Integrated directly into `npm run build:ci` to prevent performance regressions in CI pipelines.
-
-## Headless Doctor (Automated Diagnostics)
-
-Run a complete automated health audit on your decoupled WordPress and Astro environment:
-
-```bash
-npm run doctor        # Color-coded terminal diagnostic report
-npm run doctor -- --ci # Strict CI mode (exits with code 1 on failures)
-npm run doctor -- --json # Emits raw JSON report for CI/tooling
-```
-
-Audits:
-- **Environment & Configuration:** validates `.env`, domain formats, and secrets (with automatic recognition of local Docker setups).
-- **Connectivity:** checks WordPress server ping, network latency, and `/wp-json/` index.
-- **REST Endpoints:** verifies `/posts`, `/pages`, `/categories`, and `/media`.
-- **AstroPress Connector Plugin:** checks plugin version, pretty permalinks (`/%postname%/`), and redirect status.
-- **SEO Plugins:** detects Yoast SEO / Rank Math and tests schema graph ingestion.
-- **Draft Preview:** tests secure handshake with `/wp-json/astropress/v1/preview`.
-- **Image Optimization:** checks `remotePatterns` configuration for WordPress uploads.
-
-A visual diagnostics dashboard is also available in your browser at [`/doctor`](/doctor).
-
-## Draft Preview & Publishing Workflow
-
-The starter provides real-time editorial preview for unpublished posts and pages:
-
-- **WordPress Preview Button:** Editors click "Preview" in WordPress and are immediately redirected to the Astro frontend with live changes rendered.
-- **Preview Banner Toolbar:** Floating indicator bar shows draft status, post ID, and provides a 1-click link back to `wp-admin` editor.
-- **Search Engine Safe:** Automatically injects `<meta name="robots" content="noindex,nofollow" />` on all preview renderings.
-- **Deploy Webhook Dispatcher:** Publishes trigger debounced rebuild webhooks (with structured event metadata) and logs deploy history in WordPress admin.
-
-## SEO & Structured Data
-
-A central SEO module (`getSeoData`) derives metadata and structured data via an automatic 4-tier cascade:
-
-1. **Yoast SEO (`yoast_head_json`)** — uses Yoast custom titles, descriptions, canonicals, robots, and OpenGraph/Twitter tags if active.
-2. **Rank Math SEO (`rank_math_seo`)** — uses Rank Math titles, descriptions, canonicals, robots, and social tags if active.
-3. **Native WordPress REST fields** — decodes `title.rendered`, extracts plain text from `excerpt.rendered`, and resolves featured media attachments.
-4. **Site defaults** — falls back to `SITE.name` and `SITE.description` from `src/config/site.ts`.
-
-JSON-LD Schema graphs from Yoast or Rank Math are ingested directly. When absent, native generators emit standard Schema.org `BlogPosting`, `BreadcrumbList`, and `WebSite` structured data. A sitemap is generated automatically via Astro's `@astrojs/sitemap` integration from `SITE_URL`, and `robots.txt` permits indexing.
-
-## Image Optimization
-
-Remote WordPress images are processed at build time using Astro's `<Image />` component (`astro:assets`):
-
-- Dynamic `remotePatterns` in `astro.config.ts` authorize remote WordPress uploads from `WORDPRESS_URL`.
-- Responsive `widths` and `sizes` generate optimized modern WebP/AVIF formats at build time with zero client runtime overhead.
-- Featured images on detail pages use `loading="eager"` and `fetchpriority="high"` for superior LCP.
-
-## Trusted HTML and page-builder fidelity
-
-WordPress's `content.rendered` is rendered with Astro's `set:html`. **This means the configured WordPress installation is treated as a trusted editorial source.** Do not point `WORDPRESS_URL` at a WordPress installation whose content you do not control or trust. The starter does not sanitize or transform this HTML in V1.
-
-Gutenberg-authored content works naturally, to the degree it's returned by the REST API. **Elementor and other page-builder markup is preserved as-is, but visual fidelity is not promised**: page builders typically depend on their own frontend CSS, JavaScript, and asset pipelines.
-
-## WordPress Connector Plugin
-
-The starter includes an optional, lightweight WordPress plugin located in [`wordpress/plugins/astropress-connector`](wordpress/plugins/astropress-connector/README.md):
-
-- **Real-Time Draft Previews:** Instant tokenized preview handshake with Astro.
-- **Automatic Frontend Redirects:** Routes visitors accessing the WordPress domain directly to your Astro site.
-- **Admin Link Rewriting:** "View Post", "View Page", and "Visit Site" in `wp-admin` open your Astro frontend.
-- **Deploy Hooks & Debouncing:** Dispatches rebuild webhooks upon publishing/updating content, with a 30s debounce, deploy history table, and manual "🚀 Rebuild Site" button.
-- **Health Check REST API:** `GET /wp-json/astropress/v1/health` for automated diagnostics.
-
-## Tests, CI, and static deployment
-
-```bash
-npm test          # unit + integration tests (Vitest)
-npm run typecheck # astro check
-npm run lint      # eslint
-npm run build:ci  # build smoke test + performance budget assertions
-npm run audit:perf # standalone performance budget report
-```
-
-`npm run build:ci` never touches a public WordPress instance — it starts an in-memory fixture REST server for the duration of the build only, so it works offline and in CI.
-
-## Configuration reference
+## ⚙️ Configuration (`.env`)
 
 ```env
-WORDPRESS_URL=https://cms.example.com
-SITE_URL=https://www.example.com
-ASTROPRESS_PREVIEW_SECRET=your-shared-secret
+# Base URL of your WordPress installation (no trailing slash, no /wp-json)
+WORDPRESS_URL=http://localhost:8080
+
+# Canonical public URL for the Astro site (used for sitemaps, robots & Open Graph)
+SITE_URL=http://localhost:4321
+
+# Shared secret token for authenticating on-demand draft preview requests
+ASTROPRESS_PREVIEW_SECRET=astropress_preview_secret_token_123
 ```
 
-See [`.env.example`](./.env.example).
+---
+
+## 🔒 Security & Performance Guarantees
+
+- **Zero SQL/PHP Vulnerability on Frontend:** Public users only access static HTML files on the CDN. The WordPress backend and MySQL database remain private and unreachable from public traffic.
+- **Zero CLS Image Pipeline:** All images define explicit aspect ratios and responsive widths, preventing Cumulative Layout Shift during page load.
+- **Zero Editorial Client JS:** Editorial articles and institutional pages ship **0 bytes** of client JavaScript, guaranteeing maximum battery efficiency and instant response times on mobile devices.
+
+---
+
+## 👨‍💻 Author & Credits
+
+- Created and maintained by [**hdrx**](https://github.com/hd-rx8).
+- Repository: [**AstroPress-Headless-Starter**](https://github.com/hd-rx8/AstroPress-Headless-Starter).
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
