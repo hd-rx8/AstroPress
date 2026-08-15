@@ -1,5 +1,7 @@
 # WordPress + Astro Headless Starter
 
+**Performance-first WordPress Headless starter for Astro.** Static-first, TypeScript-strict, zero client-side JavaScript by default, with a decoupled content layer that keeps WordPress REST API details out of your pages and components.
+
 A small, opinionated starter that pairs **WordPress** as a decoupled editorial CMS with **Astro** as its public, statically generated frontend. It targets developers who want a clear, locally runnable example of headless WordPress — not a CMS framework, not an abstraction over multiple CMSs, and not an enterprise platform.
 
 Clone it, install dependencies, point it at a WordPress REST API and a public site URL, and build a static site from real WordPress content.
@@ -26,7 +28,29 @@ WordPress stays the editorial system of record. Astro reads content from the Wor
 
 This is version 1: **static site generation (SSG) only.** There is no server-side rendering, no hybrid rendering, and no webhook-triggered rebuilds. Publishing new WordPress content requires re-running the Astro build and redeploying the output. See [SSG and the rebuild limitation](#ssg-and-the-rebuild-limitation) below.
 
+## The content layer
+
+Every WordPress REST call lives in `src/lib/wordpress/` and is reached
+through one import: `src/lib/wordpress/index.ts`. Pages never call `fetch`
+against WordPress directly.
+
+```ts
+import { getPosts, getPostBySlug, getPages, getPageBySlug, getCategories, getMedia, getSeoData } from '../lib/wordpress';
+
+const { posts, pagination } = await getPosts({ page: 1, perPage: 12 });
+const post = await getPostBySlug('hello-world');
+const categories = await getCategories();
+```
+
+Raw WordPress REST fields (`title.rendered`, `_embedded`, taxonomy IDs, ...)
+never reach a component — the content layer normalizes everything into
+plain `Post` / `Page` / `Category` / `Media` types first. See
+[`docs/architecture.md`](docs/architecture.md) for the full layer
+breakdown, data flow, and where client-side JavaScript is (and isn't)
+allowed.
+
 ## Quick start (existing WordPress installation)
+
 
 If you already have a WordPress site — self-hosted or managed — with the REST API reachable, this is all you need:
 
