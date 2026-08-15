@@ -70,6 +70,48 @@ export interface WordPressRawEmbedded {
   author?: WordPressRawAuthor[];
 }
 
+export interface WordPressRawYoastOgImage {
+  url?: string;
+  width?: number;
+  height?: number;
+  type?: string;
+}
+
+export interface WordPressRawYoastHeadJson {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  robots?: {
+    index?: string;
+    follow?: string;
+    max_snippet?: string;
+    max_image_preview?: string;
+    max_video_preview?: string;
+  };
+  og_title?: string;
+  og_description?: string;
+  og_url?: string;
+  og_type?: string;
+  og_image?: WordPressRawYoastOgImage[];
+  twitter_card?: 'summary' | 'summary_large_image';
+  twitter_title?: string;
+  twitter_description?: string;
+  twitter_image?: string;
+  schema?: Record<string, unknown>;
+}
+
+export interface WordPressRawRankMath {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  robots?: string[];
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  twitter_card?: 'summary' | 'summary_large_image';
+  schema?: Record<string, unknown>;
+}
+
 export interface WordPressRawPost {
   id: number;
   slug: string;
@@ -78,6 +120,8 @@ export interface WordPressRawPost {
   content: WordPressRawRenderedField;
   excerpt?: WordPressRawRenderedField;
   _embedded?: WordPressRawEmbedded;
+  yoast_head_json?: WordPressRawYoastHeadJson;
+  rank_math_seo?: WordPressRawRankMath;
 }
 
 export interface WordPressRawPage {
@@ -87,6 +131,8 @@ export interface WordPressRawPage {
   title: WordPressRawRenderedField;
   content: WordPressRawRenderedField;
   excerpt?: WordPressRawRenderedField;
+  yoast_head_json?: WordPressRawYoastHeadJson;
+  rank_math_seo?: WordPressRawRankMath;
 }
 
 export interface WordPressRawCategory {
@@ -95,4 +141,5 @@ export interface WordPressRawCategory {
   name: string;
   count: number;
 }
+
 

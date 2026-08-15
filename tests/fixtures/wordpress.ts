@@ -121,3 +121,57 @@ export const wordpressCategoryFixture: WordPressRawCategory = {
   count: 12,
 };
 
+export const postWithYoastSeoFixture: WordPressRawPost = {
+  ...wordpressPostFixture,
+  id: 401,
+  slug: 'yoast-post',
+  yoast_head_json: {
+    title: 'Custom Yoast Title &amp; Insights',
+    description: 'Custom Yoast Meta Description with &quot;quotes&quot;.',
+    canonical: 'https://www.example.com/blog/yoast-post/',
+    robots: {
+      index: 'index',
+      follow: 'follow',
+    },
+    og_title: 'Yoast OG Title',
+    og_description: 'Yoast OG Description',
+    og_image: [{ url: 'https://cms.example.com/uploads/yoast-og.jpg' }],
+    twitter_card: 'summary_large_image',
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [{ '@type': 'Article', headline: 'Yoast Article' }],
+    },
+  },
+};
+
+export const postWithRankMathFixture: WordPressRawPost = {
+  ...wordpressPostFixture,
+  id: 402,
+  slug: 'rank-math-post',
+  rank_math_seo: {
+    title: 'Rank Math Custom Title',
+    description: 'Rank Math Meta Description.',
+    canonical: 'https://www.example.com/blog/rank-math-post/',
+    robots: ['index', 'follow'],
+    og_title: 'Rank Math OG Title',
+    og_description: 'Rank Math OG Description',
+    og_image: 'https://cms.example.com/uploads/rankmath-og.jpg',
+    twitter_card: 'summary_large_image',
+    schema: {
+      '@context': 'https://schema.org',
+      '@graph': [{ '@type': 'NewsArticle', headline: 'Rank Math News' }],
+    },
+  },
+};
+
+export const postWithPartialSeoFixture: WordPressRawPost = {
+  ...wordpressPostFixture,
+  id: 403,
+  slug: 'partial-seo',
+  yoast_head_json: {
+    title: '',
+    description: '',
+  },
+};
+
+
