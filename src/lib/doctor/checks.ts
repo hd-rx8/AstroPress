@@ -1,4 +1,4 @@
-import type { DoctorCategoryReport, DoctorCheck, DoctorRunnerOptions } from './types';
+import type { DoctorCategoryReport, DoctorCheck, DoctorRunnerOptions } from './types.ts';
 
 async function measureLatency<T>(fn: () => Promise<T>): Promise<{ result: T; latencyMs: number }> {
   const start = Date.now();
@@ -15,6 +15,16 @@ function resolveCategoryStatus(checks: DoctorCheck[]): 'pass' | 'warn' | 'fail' 
   return 'pass';
 }
 
+function isLocalHost(hostname: string): boolean {
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '0.0.0.0' ||
+    hostname.endsWith('.test') ||
+    hostname.endsWith('.local')
+  );
+}
+
 /** 1. Environment & Configuration Checks */
 export function checkEnvironment(options: DoctorRunnerOptions): DoctorCategoryReport {
   const checks: DoctorCheck[] = [];
@@ -27,7 +37,7 @@ export function checkEnvironment(options: DoctorRunnerOptions): DoctorCategoryRe
       category: 'environment',
       status: 'fail',
       message: 'A variável WORDPRESS_URL não está definida no arquivo .env.',
-      remedy: 'Defina WORDPRESS_URL=https://seu-wordpress.com no arquivo .env.',
+      remedy: 'Defina WORDPRESS_URL=http://localhost:8080 (Docker) ou a URL do seu servidor no .env.',
     });
   } else {
     try {
@@ -42,12 +52,15 @@ export function checkEnvironment(options: DoctorRunnerOptions): DoctorCategoryRe
           remedy: 'Remova /wp-json ou barras finais do WORDPRESS_URL.',
         });
       } else {
+        const isLocal = isLocalHost(url.hostname);
         checks.push({
           id: 'env_wp_url',
           name: 'WORDPRESS_URL configurada',
           category: 'environment',
           status: 'pass',
-          message: `WORDPRESS_URL válida: ${options.wordpressUrl}`,
+          message: isLocal
+            ? `Ambiente Local detectado: ${options.wordpressUrl} (Docker / Dev WordPress)`
+            : `WORDPRESS_URL válida: ${options.wordpressUrl}`,
         });
       }
     } catch {
@@ -70,7 +83,7 @@ export function checkEnvironment(options: DoctorRunnerOptions): DoctorCategoryRe
       category: 'environment',
       status: 'fail',
       message: 'A variável SITE_URL não está definida no arquivo .env.',
-      remedy: 'Defina SITE_URL=https://seu-site-astro.com no arquivo .env.',
+      remedy: 'Defina SITE_URL=http://localhost:4321 no arquivo .env.',
     });
   } else {
     try {
@@ -82,15 +95,18 @@ export function checkEnvironment(options: DoctorRunnerOptions): DoctorCategoryRe
           category: 'environment',
           status: 'fail',
           message: `SITE_URL contém subcaminho ("${url.pathname}"). Subpaths não são suportados.`,
-          remedy: 'Use a raiz do domínio ou subdomínio (ex: https://meusite.com).',
+          remedy: 'Use a raiz do domínio ou subdomínio (ex: https://meusite.com ou http://localhost:4321).',
         });
       } else {
+        const isLocal = isLocalHost(url.hostname);
         checks.push({
           id: 'env_site_url',
           name: 'SITE_URL configurada',
           category: 'environment',
           status: 'pass',
-          message: `SITE_URL válida: ${options.siteUrl}`,
+          message: isLocal
+            ? `Ambiente Local detectado: ${options.siteUrl} (Astro Dev Server)`
+            : `SITE_URL válida: ${options.siteUrl}`,
         });
       }
     } catch {
@@ -112,8 +128,8 @@ export function checkEnvironment(options: DoctorRunnerOptions): DoctorCategoryRe
       name: 'ASTROPRESS_PREVIEW_SECRET configurada',
       category: 'environment',
       status: 'warn',
-      message: 'ASTROPRESS_PREVIEW_SECRET não configurada. A visualização de rascunhos estará desativada.',
-      remedy: 'Adicione ASTROPRESS_PREVIEW_SECRET=sua-chave no .env e no plugin WordPress para ativar o preview.',
+      message: 'ASTROPRESS_PREVIEW_SECRET não configurada (opcional em dev local).',
+      remedy: 'Adicione ASTROPRESS_PREVIEW_SECRET=sua-chave no .env e no WordPress caso queira testar previews de rascunhos.',
     });
   } else {
     checks.push({
@@ -178,7 +194,7 @@ export async function checkConnectivity(
       status: isSlow ? 'warn' : res.ok || res.status < 500 ? 'pass' : 'fail',
       message: `Resposta HTTP ${res.status} em ${latencyMs}ms.${isSlow ? ' (Latência elevada)' : ''}`,
       latencyMs,
-      remedy: isSlow ? 'Verifique a velocidade do servidor ou CDN do WordPress.' : undefined,
+      remedy: isSlow ? 'Verifique a velocidade do servidor ou container Docker do WordPress.' : undefined,
     });
   } catch (err: unknown) {
     checks.push({
@@ -186,8 +202,8 @@ export async function checkConnectivity(
       name: 'Servidor WordPress alcançável',
       category: 'connectivity',
       status: 'fail',
-      message: `Não foi possível conectar ao WordPress (${String(err)}).`,
-      remedy: 'Certifique-se de que o servidor WordPress está ativo e acessível na rede.',
+      message: `Não foi possível conectar ao WordPress em ${wpOrigin} (${String(err)}).`,
+      remedy: 'Certifique-se de que o container Docker do WordPress está rodando (`docker compose up -d`).',
     });
   }
 
@@ -228,7 +244,7 @@ export async function checkConnectivity(
       category: 'connectivity',
       status: 'fail',
       message: `Falha ao consultar /wp-json/: ${String(err)}`,
-      remedy: 'Verifique configurações de CORS ou firewall.',
+      remedy: 'Verifique configurações de rede e certifique-se de que o WordPress está ativo.',
     });
   }
 
@@ -387,7 +403,7 @@ export async function checkConnectorPlugin(
           category: 'plugin',
           status: 'warn',
           message: 'URL do Frontend não preenchida no plugin.',
-          remedy: 'Vá em Configurações > AstroPress no WordPress e insira a URL do Astro.',
+          remedy: 'Vá em Configurações > AstroPress no WordPress e insira a URL do Astro (ex: http://localhost:4321).',
         });
       }
     } else {

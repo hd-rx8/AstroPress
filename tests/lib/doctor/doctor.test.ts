@@ -22,6 +22,17 @@ describe('Headless Doctor - Environment Checks', () => {
     expect(report.checks.every((c) => c.status === 'pass')).toBe(true);
   });
 
+  it('recognizes local Docker development setup gracefully', () => {
+    const report = checkEnvironment({
+      wordpressUrl: 'http://localhost:8080',
+      siteUrl: 'http://localhost:4321',
+    });
+
+    expect(report.status).toBe('warn'); // only warn due to optional preview secret
+    expect(report.checks.find((c) => c.id === 'env_wp_url')?.message).toContain('Ambiente Local detectado');
+    expect(report.checks.find((c) => c.id === 'env_site_url')?.message).toContain('Ambiente Local detectado');
+  });
+
   it('fails when WORDPRESS_URL contains a subpath or is missing', () => {
     const missing = checkEnvironment({ siteUrl: 'https://www.example.com' });
     expect(missing.status).toBe('fail');

@@ -9,7 +9,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { runDoctorDiagnostics } from '../lib/doctor';
 import { getSeoData } from '../lib/wordpress';
 
-const report = await runDoctorDiagnostics();
+const metaEnv = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : undefined;
+const wpUrl = (metaEnv?.WORDPRESS_URL as string | undefined) || 'http://localhost:8080';
+const siteUrl = (metaEnv?.SITE_URL as string | undefined) || 'http://localhost:4321';
+const previewSecret = metaEnv?.ASTROPRESS_PREVIEW_SECRET as string | undefined;
+
+const report = await runDoctorDiagnostics({
+  wordpressUrl: wpUrl,
+  siteUrl: siteUrl,
+  previewSecret: previewSecret,
+});
 
 const metadata = getSeoData({
   title: 'Headless Doctor — Diagnóstico do Sistema',

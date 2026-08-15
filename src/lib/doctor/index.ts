@@ -30,9 +30,25 @@ export type { CheckStatus, DoctorCategoryReport, DoctorCheck, DoctorReport, Doct
 export async function runDoctorDiagnostics(options: DoctorRunnerOptions = {}): Promise<DoctorReport> {
   const start = Date.now();
 
-  const resolvedWpUrl = options.wordpressUrl ?? (typeof process !== 'undefined' ? process.env.WORDPRESS_URL : undefined);
-  const resolvedSiteUrl = options.siteUrl ?? (typeof process !== 'undefined' ? process.env.SITE_URL : undefined);
-  const resolvedSecret = options.previewSecret ?? (typeof process !== 'undefined' ? process.env.ASTROPRESS_PREVIEW_SECRET : undefined);
+  const metaEnv = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : undefined;
+  const procEnv = typeof process !== 'undefined' && process.env ? process.env : undefined;
+
+  const resolvedWpUrl =
+    options.wordpressUrl ??
+    (metaEnv?.WORDPRESS_URL as string | undefined) ??
+    procEnv?.WORDPRESS_URL ??
+    'http://localhost:8080';
+
+  const resolvedSiteUrl =
+    options.siteUrl ??
+    (metaEnv?.SITE_URL as string | undefined) ??
+    procEnv?.SITE_URL ??
+    'http://localhost:4321';
+
+  const resolvedSecret =
+    options.previewSecret ??
+    (metaEnv?.ASTROPRESS_PREVIEW_SECRET as string | undefined) ??
+    procEnv?.ASTROPRESS_PREVIEW_SECRET;
 
   const resolvedOptions: DoctorRunnerOptions = {
     wordpressUrl: resolvedWpUrl,
