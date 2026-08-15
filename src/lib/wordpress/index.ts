@@ -16,6 +16,7 @@ export { getAllCategories, getAllCategories as getCategories } from './categorie
 
 export { getMediaById, getMediaById as getMedia } from './media';
 
+export { getDraftPreview } from './preview';
 
 export {
   buildBreadcrumbsJsonLd,
@@ -25,7 +26,6 @@ export {
   getSeoData,
 } from './seo';
 export type { BreadcrumbItem, Metadata, SeoInput, WordPressSeoOptions } from './seo';
-
 
 export type { Category, FeaturedImage, Media, Page, Post, PostAuthor } from './normalizers';
 export { WordPressContractError } from './normalizers';

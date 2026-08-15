@@ -2,6 +2,7 @@ export interface AppEnv {
   wordpressUrl: URL;
   wordpressApiUrl: URL;
   siteUrl: URL;
+  previewSecret?: string;
 }
 
 function parseAbsoluteHttpUrl(name: string, value: string | undefined): URL {
@@ -67,7 +68,10 @@ export function loadEnv(source: Record<string, string | undefined>): AppEnv {
     `${wordpressUrl.origin}/wp-json/wp/v2`,
   );
 
-  return { wordpressUrl, wordpressApiUrl, siteUrl };
+  const rawSecret = source.ASTROPRESS_PREVIEW_SECRET ?? source.PREVIEW_SECRET;
+  const previewSecret = rawSecret && rawSecret.trim() !== '' ? rawSecret.trim() : undefined;
+
+  return { wordpressUrl, wordpressApiUrl, siteUrl, previewSecret };
 }
 
 /**
