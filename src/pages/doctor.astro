@@ -1,0 +1,101 @@
+---
+/**
+ * Headless Doctor Diagnostics Dashboard.
+ *
+ * Provides visual, interactive diagnostics for WordPress CMS connectivity,
+ * REST API endpoints, plugin health, and SEO configuration.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { runDoctorDiagnostics } from '../lib/doctor';
+import { getSeoData } from '../lib/wordpress';
+
+const report = await runDoctorDiagnostics();
+
+const metadata = getSeoData({
+  title: 'Headless Doctor — Diagnóstico do Sistema',
+  description: 'Auditoria e diagnóstico em tempo real do WordPress CMS desacoplado e frontend Astro.',
+  path: '/doctor/',
+  robots: 'noindex,nofollow',
+});
+---
+
+<BaseLayout metadata={metadata}>
+  <div class="doctor-dashboard">
+    <header class="doctor-header">
+      <div class="doctor-header__main">
+        <span class="hero__badge">🩺 Diagnóstico Automático</span>
+        <h1 class="doctor-header__title">Headless Doctor</h1>
+        <p class="doctor-header__desc">
+          Auditoria completa de conectividade, endpoints REST, plugins de SEO e configurações do seu WordPress.
+        </p>
+      </div>
+      <div class="doctor-header__stats">
+        <div class="doctor-stat-card">
+          <span class="doctor-stat-card__val" style="color: #16a34a;">{report.passed}</span>
+          <span class="doctor-stat-card__lbl">Passaram</span>
+        </div>
+        <div class="doctor-stat-card">
+          <span class="doctor-stat-card__val" style="color: #ca8a04;">{report.warnings}</span>
+          <span class="doctor-stat-card__lbl">Avisos</span>
+        </div>
+        <div class="doctor-stat-card">
+          <span class="doctor-stat-card__val" style="color: #dc2626;">{report.failures}</span>
+          <span class="doctor-stat-card__lbl">Falhas</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="doctor-system-bar">
+      <span><strong>WordPress CMS:</strong> <code>{report.system.wordpressUrl}</code></span>
+      <span><strong>Frontend Astro:</strong> <code>{report.system.siteUrl}</code></span>
+      <span><strong>Auditoria:</strong> {report.durationMs}ms</span>
+    </div>
+
+    <main class="doctor-categories">
+      {
+        report.categories.map((cat) => (
+          <section class={`doctor-card doctor-card--${cat.status}`}>
+            <header class="doctor-card__header">
+              <h2 class="doctor-card__title">{cat.title}</h2>
+              <span class={`doctor-badge doctor-badge--${cat.status}`}>
+                {cat.status === 'pass' ? '🟢 Saudável' : cat.status === 'warn' ? '🟡 Atenção' : '🔴 Falha'}
+              </span>
+            </header>
+            <ul class="doctor-check-list">
+              {cat.checks.map((check) => (
+                <li class={`doctor-check-item doctor-check-item--${check.status}`}>
+                  <div class="doctor-check-item__main">
+                    <span class="doctor-check-item__icon">
+                      {check.status === 'pass' ? '✓' : check.status === 'warn' ? '⚠' : '✕'}
+                    </span>
+                    <div>
+                      <strong class="doctor-check-item__name">{check.name}</strong>
+                      <p class="doctor-check-item__msg">{check.message}</p>
+                      {check.remedy && (
+                        <div class="doctor-check-item__remedy">
+                          <strong>💡 Como resolver:</strong> {check.remedy}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {check.latencyMs !== undefined && (
+                    <span class="doctor-check-item__latency">{check.latencyMs}ms</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </main>
+
+    <footer class="doctor-footer">
+      <p>
+        Você também pode rodar esta auditoria diretamente no seu terminal com <code>npm run doctor</code>.
+      </p>
+      <div style="margin-top: 1rem;">
+        <a href="/" class="btn btn--secondary">Voltar ao Início</a>
+      </div>
+    </footer>
+  </div>
+</BaseLayout>
