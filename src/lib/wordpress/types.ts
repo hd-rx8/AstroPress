@@ -74,3 +74,11 @@ export interface WordPressRawPage {
   content: WordPressRawRenderedField;
   excerpt?: WordPressRawRenderedField;
 }
+
+export interface WordPressRawCategory {
+  id: number;
+  slug: string;
+  name: string;
+  count: number;
+}
+

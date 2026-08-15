@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { normalizePage, normalizePost } from '../../../src/lib/wordpress/normalizers';
+import { normalizeCategory, normalizePage, normalizePost } from '../../../src/lib/wordpress/normalizers';
 import {
   pageWithoutExcerpt,
   postWithEmptyEmbeds,
   postWithEntities,
   postWithErrorStubEmbeds,
   postWithoutEmbeddedData,
+  wordpressCategoryFixture,
   wordpressPageFixture,
   wordpressPostFixture,
 } from '../../fixtures/wordpress';
+
 
 describe('normalizePost', () => {
   it('does not expose rendered or embedded REST internals to the frontend', () => {
@@ -116,3 +118,20 @@ describe('normalizePage', () => {
     expect(() => normalizePage(invalid)).toThrow(/title/i);
   });
 });
+
+describe('normalizeCategory', () => {
+  it('normalizes a category, decoding entities in the name', () => {
+    expect(normalizeCategory(wordpressCategoryFixture)).toEqual({
+      id: 5,
+      slug: 'news',
+      name: 'News & Updates',
+      count: 12,
+    });
+  });
+
+  it('throws a contextual error when a required field is missing', () => {
+    const invalid = { ...wordpressCategoryFixture, slug: undefined } as never;
+    expect(() => normalizeCategory(invalid)).toThrow(/slug/i);
+  });
+});
+

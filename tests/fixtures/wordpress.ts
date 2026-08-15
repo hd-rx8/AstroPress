@@ -1,4 +1,4 @@
-import type { WordPressRawPage, WordPressRawPost } from '../../src/lib/wordpress/types';
+import type { WordPressRawCategory, WordPressRawPage, WordPressRawPost } from '../../src/lib/wordpress/types';
 
 /** A fully-populated raw REST post, including `_embed`-ded media/author. */
 export const wordpressPostFixture: WordPressRawPost = {
@@ -113,3 +113,11 @@ export const postWithEntities: WordPressRawPost = {
   content: { rendered: '<p>Body.</p>' },
   excerpt: { rendered: '<p>Rock &amp; roll &#8211; the sequel&hellip;</p>' },
 };
+
+export const wordpressCategoryFixture: WordPressRawCategory = {
+  id: 5,
+  slug: 'news',
+  name: 'News &amp; Updates',
+  count: 12,
+};
+

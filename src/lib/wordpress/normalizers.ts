@@ -9,7 +9,13 @@
  * should never see.
  */
 
-import type { WordPressRawAuthor, WordPressRawFeaturedMedia, WordPressRawPage, WordPressRawPost } from './types';
+import type {
+  WordPressRawAuthor,
+  WordPressRawCategory,
+  WordPressRawFeaturedMedia,
+  WordPressRawPage,
+  WordPressRawPost,
+} from './types';
 
 export interface PostAuthor {
   name: string;
@@ -188,3 +194,20 @@ export function normalizePage(raw: WordPressRawPage): Page {
     excerpt: normalizeExcerpt(raw.excerpt),
   };
 }
+
+export interface Category {
+  id: number;
+  slug: string;
+  name: string;
+  count: number;
+}
+
+/** Converts a raw WordPress REST category into a clean {@link Category}. */
+export function normalizeCategory(raw: WordPressRawCategory): Category {
+  const id = requireField(raw.id, 'category', 'id');
+  const slug = requireField(raw.slug, 'category', 'slug');
+  const name = collapseWhitespace(decodeHtmlEntities(requireField(raw.name, 'category', 'name')));
+  const count = requireField(raw.count, 'category', 'count');
+  return { id, slug, name, count };
+}
+
