@@ -1,8 +1,8 @@
 ---
 /**
  * Shared HTML shell for every page: renders title, description, canonical,
- * Open Graph / Twitter metadata from a `Metadata` object, and an optional
- * JSON-LD `<script>` block only when `jsonLd` is provided.
+ * Open Graph / Twitter metadata, modern navigation header with dropdown, and
+ * multi-column footer.
  */
 import '../styles/global.css';
 import { SITE } from '../config/site';
@@ -17,26 +17,10 @@ export interface Props {
 
 const { metadata, jsonLd, ogType = 'website' } = Astro.props;
 
-/**
- * Escapes `<` so a `</script>` substring inside serialized JSON-LD data
- * (e.g. from an editorial post title) can never close the script tag early
- * and inject markup — the standard mitigation for safely embedding JSON in
- * a script element. The pre-escaped string is then injected via
- * `set:html` below: a plain `{jsonLdScript}` expression child would not
- * work here because `is:inline` (required to stop Astro's script
- * processor from choking on non-JS content) also disables expression
- * evaluation inside `<script>` children, so `set:html` is the only way to
- * get the actual JSON into the tag rather than the literal text
- * "{jsonLdScript}". This makes `BaseLayout.astro` a second, narrower
- * `set:html` user alongside `PostContent.astro` — that pairing is
- * intentional: this content is pre-escaped, self-generated JSON, not raw
- * untrusted post HTML, so it doesn't violate the "sole raw-HTML rendering
- * boundary" constraint that `PostContent.astro` exists to uphold.
- */
 const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : undefined;
 ---
 
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,30 +40,127 @@ const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : 
     {jsonLdScript && <script type="application/ld+json" is:inline set:html={jsonLdScript} />}
   </head>
   <body>
-    <header class="site-header">
-      <div class="site-header__inner">
-        <p class="site-header__title"><a href="/">{SITE.name}</a></p>
-        <nav class="site-nav" aria-label="Navegação">
-          <a href="/" class="site-nav__link">Início</a>
-          <a href="/blog/" class="site-nav__link">Blog</a>
-          <a href="/about/" class="site-nav__link">Sobre</a>
+    <header class="header">
+      <div class="header__inner">
+        <a href="/" class="header__brand">
+          <div class="header__logo-icon" aria-hidden="true">
+            <span class="bar bar--1"></span>
+            <span class="bar bar--2"></span>
+            <span class="bar bar--3"></span>
+          </div>
+          <span class="header__brand-name">{SITE.name}</span>
+        </a>
+
+        <nav class="header__nav" aria-label="Navegação Principal">
+          <a href="/" class="nav-link">Início</a>
+          <a href="/blog/" class="nav-link">Blog</a>
+          <a href="/about/" class="nav-link">Sobre</a>
+          
+          <div class="nav-dropdown">
+            <button class="nav-dropdown__btn" aria-haspopup="true" aria-expanded="false">
+              <span>Recursos</span>
+              <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <div class="nav-dropdown__menu" role="menu">
+              <a href="/doctor/" class="nav-dropdown__item" role="menuitem">
+                <span class="nav-dropdown__item-icon">🩺</span>
+                <div>
+                  <strong>Headless Doctor</strong>
+                  <p>Diagnóstico em tempo real</p>
+                </div>
+              </a>
+              <a href="/preview/" class="nav-dropdown__item" role="menuitem">
+                <span class="nav-dropdown__item-icon">👁️</span>
+                <div>
+                  <strong>Draft Preview</strong>
+                  <p>Visualização de rascunhos</p>
+                </div>
+              </a>
+              <a href="/sitemap-index.xml" class="nav-dropdown__item" role="menuitem">
+                <span class="nav-dropdown__item-icon">🗺️</span>
+                <div>
+                  <strong>Sitemap XML</strong>
+                  <p>Mapa do site para indexação</p>
+                </div>
+              </a>
+            </div>
+          </div>
         </nav>
+
+        <div class="header__actions">
+          <a href="/doctor/" class="btn-ghost">Diagnóstico</a>
+          <a href="/blog/" class="btn-pill">
+            <span>Explorar Blog</span>
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clip-rule="evenodd" />
+            </svg>
+          </a>
+        </div>
       </div>
     </header>
+
     <main class="site-main">
       <slot />
     </main>
-    <footer class="site-footer">
-      <div class="site-footer__inner">
-        <p>&copy; {new Date().getFullYear()} {SITE.name}</p>
-        <nav class="site-footer__nav" aria-label="Links do Rodapé">
-          <a href="/blog/">Blog</a>
-          <a href="/about/">Sobre</a>
-          <a href="/robots.txt">Robots</a>
-          <a href="/sitemap-index.xml">Sitemap</a>
-        </nav>
+
+    <footer class="footer">
+      <div class="footer__inner">
+        <div class="footer__brand-col">
+          <a href="/" class="header__brand">
+            <div class="header__logo-icon" aria-hidden="true">
+              <span class="bar bar--1"></span>
+              <span class="bar bar--2"></span>
+              <span class="bar bar--3"></span>
+            </div>
+            <span class="header__brand-name">{SITE.name}</span>
+          </a>
+          <p class="footer__description">
+            Starter WordPress Headless de alta performance para Astro 5. Zero dependência de PHP no frontend e máxima pontuação no Core Web Vitals.
+          </p>
+        </div>
+
+        <div class="footer__links-grid">
+          <div class="footer__col">
+            <strong class="footer__col-title">Navegação</strong>
+            <ul class="footer__list">
+              <li><a href="/">Início</a></li>
+              <li><a href="/blog/">Blog</a></li>
+              <li><a href="/about/">Sobre o Projeto</a></li>
+            </ul>
+          </div>
+
+          <div class="footer__col">
+            <strong class="footer__col-title">Ferramentas</strong>
+            <ul class="footer__list">
+              <li><a href="/doctor/">Headless Doctor</a></li>
+              <li><a href="/preview/">Draft Preview</a></li>
+              <li><a href="/robots.txt">Robots.txt</a></li>
+              <li><a href="/sitemap-index.xml">Sitemap</a></li>
+            </ul>
+          </div>
+
+          <div class="footer__col">
+            <strong class="footer__col-title">Arquitetura</strong>
+            <ul class="footer__list">
+              <li><span>Astro 5 (SSG)</span></li>
+              <li><span>WordPress REST API</span></li>
+              <li><span>0 KB Client JavaScript</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <div class="footer__bottom-inner">
+          <p>&copy; {new Date().getFullYear()} {SITE.name}. Desenvolvido com Astro e WordPress Headless.</p>
+          <div class="footer__status-badge">
+            <span class="status-dot"></span>
+            <span>Sistema 100% Estático</span>
+          </div>
+        </div>
       </div>
     </footer>
   </body>
-
 </html>

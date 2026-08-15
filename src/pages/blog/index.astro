@@ -1,8 +1,9 @@
 ---
 /**
  * Blog index: page 1 of the paginated post listing (served at `/blog/`).
- * Later pages live at `/blog/page/N/` — see `blog/page/[number].astro`.
+ * Displays a prominent Featured Post at the top followed by modern post cards.
  */
+import FeaturedPostCard from '../../components/FeaturedPostCard.astro';
 import Pagination from '../../components/Pagination.astro';
 import PostCard from '../../components/PostCard.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
@@ -10,8 +11,12 @@ import { BLOG_PAGE_SIZE, buildBreadcrumbsJsonLd, getPosts, getSeoData } from '..
 
 const { posts, pagination } = await getPosts({ page: 1, perPage: BLOG_PAGE_SIZE });
 
+const featuredPost = posts[0];
+const remainingPosts = posts.slice(1);
+
 const metadata = getSeoData({
-  title: 'Blog',
+  title: 'Blog — Artigos e Publicações',
+  description: 'Confira as últimas publicações, tutoriais e novidades sobre WordPress Headless e Astro.',
   path: '/blog/',
 });
 
@@ -22,11 +27,37 @@ const jsonLd = buildBreadcrumbsJsonLd([
 ---
 
 <BaseLayout metadata={metadata} jsonLd={jsonLd}>
-  <h1>Blog</h1>
-  <ul class="card-grid">
-    {posts.map((post) => <PostCard post={post} />)}
-  </ul>
-  <Pagination page={pagination.page} totalPages={pagination.totalPages} />
+  <div class="blog-index">
+    <header class="blog-index__header">
+      <span class="hero__badge">Publicações & Notícias</span>
+      <h1 class="blog-index__title">Nosso Blog</h1>
+      <p class="blog-index__desc">
+        Artigos, análises técnicas e melhores práticas de desenvolvimento web moderno e headless.
+      </p>
+    </header>
+
+    {featuredPost && (
+      <section class="blog-featured-section">
+        <h2 class="section-label">Publicação em Destaque</h2>
+        <FeaturedPostCard post={featuredPost} />
+      </section>
+    )}
+
+    {remainingPosts.length > 0 && (
+      <section class="blog-grid-section">
+        <div class="section__header">
+          <div>
+            <h2 class="section__title">Todos os Artigos</h2>
+            <p class="section__subtitle">Explore as publicações da nossa equipe editorial</p>
+          </div>
+        </div>
+
+        <ul class="card-grid">
+          {remainingPosts.map((post) => <PostCard post={post} />)}
+        </ul>
+      </section>
+    )}
+
+    <Pagination page={pagination.page} totalPages={pagination.totalPages} />
+  </div>
 </BaseLayout>
-
-

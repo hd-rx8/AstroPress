@@ -64,10 +64,18 @@ export interface WordPressRawAuthor {
   slug: string;
 }
 
+export interface WordPressRawTerm {
+  id: number;
+  name: string;
+  slug: string;
+  taxonomy: string;
+}
+
 /** The `_embedded` container present when a request used `_embed`. */
 export interface WordPressRawEmbedded {
   'wp:featuredmedia'?: WordPressRawFeaturedMedia[];
   author?: WordPressRawAuthor[];
+  'wp:term'?: WordPressRawTerm[][];
 }
 
 export interface WordPressRawYoastOgImage {

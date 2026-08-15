@@ -39,6 +39,12 @@ export interface Media {
 }
 
 
+export interface PostCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 export interface Post {
   id: number;
   slug: string;
@@ -48,6 +54,7 @@ export interface Post {
   date: string;
   featuredImage?: FeaturedImage;
   author?: PostAuthor;
+  categories?: PostCategory[];
 }
 
 export interface Page {
@@ -175,6 +182,20 @@ function normalizeExcerpt(excerpt: { rendered: string } | undefined): string | u
   return stripped === '' ? undefined : stripped;
 }
 
+function normalizePostCategories(terms: import('./types').WordPressRawTerm[][] | undefined): PostCategory[] | undefined {
+  if (!Array.isArray(terms) || terms.length === 0) return undefined;
+  const categoriesGroup = terms[0];
+  if (!Array.isArray(categoriesGroup) || categoriesGroup.length === 0) return undefined;
+  const list = categoriesGroup
+    .filter((t) => typeof t?.name === 'string' && typeof t?.slug === 'string')
+    .map((t) => ({
+      id: t.id,
+      name: collapseWhitespace(decodeHtmlEntities(t.name)),
+      slug: t.slug,
+    }));
+  return list.length > 0 ? list : undefined;
+}
+
 /** Converts a raw WordPress REST post (optionally `_embed`-ded) into a clean {@link Post}. */
 export function normalizePost(raw: WordPressRawPost): Post {
   const id = requireField(raw.id, 'post', 'id');
@@ -192,6 +213,7 @@ export function normalizePost(raw: WordPressRawPost): Post {
     excerpt: normalizeExcerpt(raw.excerpt),
     featuredImage: normalizeFeaturedImage(raw._embedded?.['wp:featuredmedia']),
     author: normalizeAuthor(raw._embedded?.author),
+    categories: normalizePostCategories(raw._embedded?.['wp:term']),
   };
 }
 

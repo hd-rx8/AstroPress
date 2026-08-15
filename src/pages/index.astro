@@ -1,14 +1,16 @@
 ---
 /**
- * Home page: Hero introduction and latest posts.
+ * Home page: Modern Hero introduction, Featured Post, and latest posts grid.
  */
+import FeaturedPostCard from '../components/FeaturedPostCard.astro';
 import PostCard from '../components/PostCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE } from '../config/site';
 import { buildWebsiteJsonLd, getAllPosts, getSeoData } from '../lib/wordpress';
 
 const posts = await getAllPosts();
-const recentPosts = posts.slice(0, SITE.homePostLimit);
+const featuredPost = posts[0];
+const recentPosts = posts.slice(1, SITE.homePostLimit);
 
 const metadata = getSeoData({
   title: SITE.name,
@@ -24,24 +26,40 @@ const jsonLd = buildWebsiteJsonLd();
     <div class="hero__badge">WordPress Headless + Astro 5</div>
     <h1 class="hero__title">Performance máxima e arquitetura moderna para o seu WordPress</h1>
     <p class="hero__description">
-      Gerencie o conteúdo no painel do WordPress e renderize páginas estáticas ultrarrápidas com Astro. Zero dependência de PHP em tempo de execução, Core Web Vitals perfeitos e total controle do frontend.
+      Gerencie todo o seu conteúdo no painel do WordPress e renderize páginas estáticas ultrarrápidas com Astro. Zero dependência de PHP em tempo de execução, Core Web Vitals impecáveis e total controle do frontend.
     </p>
     <div class="hero__actions">
-      <a href="/blog/" class="btn btn--primary">Explorar Artigos &rarr;</a>
-      <a href="/about/" class="btn btn--secondary">Sobre o Projeto</a>
+      <a href="/blog/" class="btn btn--primary">
+        <span>Explorar Artigos</span>
+        <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" style="margin-left: 0.35rem;">
+          <path fill-rule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clip-rule="evenodd" />
+        </svg>
+      </a>
+      <a href="/doctor/" class="btn btn--secondary">
+        <span>🩺 Diagnóstico Automático</span>
+      </a>
     </div>
   </section>
 
-  <section class="section">
-    <div class="section__header">
-      <div>
-        <h2 class="section__title">Artigos Recentes</h2>
-        <p class="section__subtitle">Publicações diretas da API REST do WordPress</p>
+  {featuredPost && (
+    <section class="blog-featured-section">
+      <h2 class="section-label">Publicação Recente em Destaque</h2>
+      <FeaturedPostCard post={featuredPost} />
+    </section>
+  )}
+
+  {recentPosts.length > 0 && (
+    <section class="section">
+      <div class="section__header">
+        <div>
+          <h2 class="section__title">Artigos Recentes</h2>
+          <p class="section__subtitle">Publicações sincronizadas diretamente da API REST do WordPress</p>
+        </div>
+        <a href="/blog/" class="section__link">Ver todos os artigos &rarr;</a>
       </div>
-      <a href="/blog/" class="section__link">Ver todos &rarr;</a>
-    </div>
-    <ul class="card-grid">
-      {recentPosts.map((post) => <PostCard post={post} />)}
-    </ul>
-  </section>
+      <ul class="card-grid">
+        {recentPosts.map((post) => <PostCard post={post} />)}
+      </ul>
+    </section>
+  )}
 </BaseLayout>

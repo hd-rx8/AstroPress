@@ -8,9 +8,9 @@
 import Pagination from '../../../components/Pagination.astro';
 import PostCard from '../../../components/PostCard.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { blogPaginationRoutePages, blogPagePath } from '../../../lib/routes';
-import { BLOG_PAGE_SIZE, buildBreadcrumbsJsonLd, getPosts, getSeoData } from '../../../lib/wordpress';
+import { blogPagePath, blogPaginationRoutePages } from '../../../lib/routes';
 import type { PostsQueryResult } from '../../../lib/wordpress';
+import { BLOG_PAGE_SIZE, buildBreadcrumbsJsonLd, getPosts, getSeoData } from '../../../lib/wordpress';
 
 export async function getStaticPaths() {
   const first = await getPosts({ page: 1, perPage: BLOG_PAGE_SIZE });
@@ -31,23 +31,34 @@ const { result } = Astro.props;
 const { posts, pagination } = result;
 
 const metadata = getSeoData({
-  title: `Blog — Page ${pagination.page}`,
+  title: `Blog — Página ${pagination.page}`,
+  description: `Navegue pelas publicações da página ${pagination.page} do nosso blog.`,
   path: blogPagePath(pagination.page),
 });
 
 const jsonLd = buildBreadcrumbsJsonLd([
   { name: 'Home', url: '/' },
   { name: 'Blog', url: '/blog/' },
-  { name: `Page ${pagination.page}`, url: blogPagePath(pagination.page) },
+  { name: `Página ${pagination.page}`, url: blogPagePath(pagination.page) },
 ]);
 ---
 
 <BaseLayout metadata={metadata} jsonLd={jsonLd}>
-  <h1>Blog</h1>
-  <ul class="card-grid">
-    {posts.map((post) => <PostCard post={post} />)}
-  </ul>
-  <Pagination page={pagination.page} totalPages={pagination.totalPages} />
+  <div class="blog-index">
+    <header class="blog-index__header">
+      <span class="hero__badge">Página {pagination.page} de {pagination.totalPages}</span>
+      <h1 class="blog-index__title">Nosso Blog</h1>
+      <p class="blog-index__desc">
+        Artigos, análises técnicas e melhores práticas de desenvolvimento web moderno e headless.
+      </p>
+    </header>
+
+    <section class="blog-grid-section">
+      <ul class="card-grid">
+        {posts.map((post) => <PostCard post={post} />)}
+      </ul>
+    </section>
+
+    <Pagination page={pagination.page} totalPages={pagination.totalPages} />
+  </div>
 </BaseLayout>
-
-
