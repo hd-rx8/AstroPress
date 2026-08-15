@@ -54,7 +54,18 @@ describe('buildMetadata', () => {
     const metadata = buildMetadata({ title: 'About', path: '/about/' });
     expect(metadata.twitter).toEqual({ card: 'summary' });
   });
+
+  it('defaults robots to index,follow', () => {
+    const metadata = buildMetadata({ title: 'About', path: '/about/' });
+    expect(metadata.robots).toBe('index,follow');
+  });
+
+  it('honors an explicit noindex robots directive', () => {
+    const metadata = buildMetadata({ title: 'Draft', path: '/draft/', robots: 'noindex,follow' });
+    expect(metadata.robots).toBe('noindex,follow');
+  });
 });
+
 
 describe('buildPostJsonLd', () => {
   const canonicalUrl = 'https://www.example.com/blog/hello-world/';

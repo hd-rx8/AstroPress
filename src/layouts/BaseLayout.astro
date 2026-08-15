@@ -43,6 +43,7 @@ const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : 
     <title>{metadata.title}</title>
     <meta name="description" content={metadata.description} />
     <link rel="canonical" href={metadata.canonical} />
+    <meta name="robots" content={metadata.robots} />
 
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={metadata.openGraph.title} />

@@ -25,6 +25,7 @@ export interface Metadata {
   title: string;
   description: string;
   canonical: string;
+  robots: string;
   openGraph: OpenGraphMetadata;
   twitter: TwitterMetadata;
 }
@@ -34,6 +35,11 @@ export interface BuildMetadataInput {
   description?: string;
   path: string;
   imageUrl?: string;
+  /**
+   * Defaults to `'index,follow'`. Pass `'noindex,follow'` to keep a page out
+   * of search results while still letting crawlers follow its links.
+   */
+  robots?: 'index,follow' | 'noindex,follow';
 }
 
 /**
@@ -44,7 +50,7 @@ export interface BuildMetadataInput {
  * given, and the Twitter card is `summary_large_image` only in that case —
  * otherwise it is the plain `summary` card.
  */
-export function buildMetadata({ title, description, path, imageUrl }: BuildMetadataInput): Metadata {
+export function buildMetadata({ title, description, path, imageUrl, robots }: BuildMetadataInput): Metadata {
   const canonical = new URL(path, env.siteUrl).toString();
   const resolvedDescription = description && description.trim() !== '' ? description : SITE.description;
 
@@ -52,6 +58,7 @@ export function buildMetadata({ title, description, path, imageUrl }: BuildMetad
     title,
     description: resolvedDescription,
     canonical,
+    robots: robots ?? 'index,follow',
     openGraph: {
       title,
       description: resolvedDescription,
@@ -63,6 +70,7 @@ export function buildMetadata({ title, description, path, imageUrl }: BuildMetad
     },
   };
 }
+
 
 /**
  * Builds a `BlogPosting` JSON-LD object for a single post. Only fields with
