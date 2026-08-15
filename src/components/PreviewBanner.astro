@@ -1,0 +1,28 @@
+---
+interface Props {
+  postId: number;
+  postType?: string;
+  editUrl?: string;
+}
+
+const { postId, postType = 'post', editUrl } = Astro.props;
+---
+
+<aside class="preview-toolbar" role="region" aria-label="Draft Preview Controls">
+  <div class="preview-toolbar__inner">
+    <div class="preview-toolbar__status">
+      <span class="preview-toolbar__badge">🟡 MODO RASCUNHO</span>
+      <span class="preview-toolbar__label">{postType.toUpperCase()} #{postId} — Pré-visualização</span>
+    </div>
+    <div class="preview-toolbar__actions">
+      {editUrl && (
+        <a href={editUrl} target="_blank" rel="noopener noreferrer" class="preview-toolbar__btn preview-toolbar__btn--edit">
+          ✏️ Editar no WordPress
+        </a>
+      )}
+      <a href="/" class="preview-toolbar__btn preview-toolbar__btn--exit">
+        ✖️ Sair do Preview
+      </a>
+    </div>
+  </div>
+</aside>
