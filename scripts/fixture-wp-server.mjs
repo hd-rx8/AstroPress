@@ -225,11 +225,31 @@ const PAGES = [
     date: '2026-01-01T09:00:00',
     title: { rendered: 'Sobre o AstroPress' },
     content: {
-      rendered:
-        '<p>O AstroPress é um starter de alta performance que une a flexibilidade editorial do WordPress à velocidade incomparável do Astro 5.</p>',
+      rendered: `
+        <p class="lead">O <strong>AstroPress Headless Starter</strong> é uma base arquitetural moderna e opinativa projetada para equipes e desenvolvedores que desejam combinar o ecossistema editorial consolidado do WordPress com a velocidade, segurança e simplicidade do Astro 5.</p>
+
+        <h2>🚀 Visão Geral da Arquitetura</h2>
+        <p>O WordPress permanece como o <em>sistema editorial de registro</em> (CMS desacoplado), gerenciando posts, páginas, mídias, categorias e autores. Durante o processo de build, o Astro consulta a WordPress REST API e compila todo o site em puro HTML e CSS estático.</p>
+
+        <h2>⚡ Quick Start em 3 Passos</h2>
+        <ol>
+          <li><strong>Clone o repositório:</strong> <code>git clone https://github.com/hd-rx8/AstroPress-Headless-Starter.git</code></li>
+          <li><strong>Inicie o WordPress via Docker:</strong> <code>docker compose up -d &amp;&amp; npm run seed</code></li>
+          <li><strong>Inicie o servidor de desenvolvimento:</strong> <code>npm run dev</code></li>
+        </ol>
+
+        <h2>🛠️ Principais Comandos do Projeto</h2>
+        <ul>
+          <li><code>npm run dev</code> — Inicia o servidor Astro em <code>http://localhost:4321</code>.</li>
+          <li><code>npm run doctor</code> — Diagnóstico automatizado em 7 categorias.</li>
+          <li><code>npm run build:ci</code> — Smoke test estático contra servidor fixture.</li>
+          <li><code>npm run audit:perf</code> — Auditoria de orçamentos de performance (0 KB JS, CSS &le; 25 KB).</li>
+          <li><code>npm run seed</code> — Popula o banco de dados do WordPress local.</li>
+        </ul>
+      `,
     },
     excerpt: {
-      rendered: '<p>Sobre o projeto AstroPress Headless Starter.</p>',
+      rendered: '<p>Conheça a arquitetura, objetivos e documentação completa do AstroPress Headless Starter.</p>',
     },
   },
 ];

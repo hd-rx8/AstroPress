@@ -1,7 +1,7 @@
 <?php
 /**
  * WordPress Seeder: Injects 6 comprehensive, technical AstroPress starter posts,
- * architectural guides, and manifestos into the WordPress database.
+ * the 'About' README-in-site page, categories, permalinks, and rocket featured image.
  */
 
 define('WP_USE_THEMES', false);
@@ -42,12 +42,16 @@ if (file_exists($source_file)) {
     }
 }
 
-// 3. Clear old sample posts
+// 3. Clear old sample posts & pages
 $existing_posts = get_posts(array('post_type' => 'post', 'numberposts' => -1, 'post_status' => 'any'));
 foreach ($existing_posts as $ep) {
     wp_delete_post($ep->ID, true);
 }
-echo "✓ Posts antigos limpos.\n";
+$existing_pages = get_posts(array('post_type' => 'page', 'numberposts' => -1, 'post_status' => 'any'));
+foreach ($existing_pages as $epg) {
+    wp_delete_post($epg->ID, true);
+}
+echo "✓ Posts e páginas antigas limpos.\n";
 
 // Helper for categories
 function get_or_create_cat($name, $slug) {
@@ -121,14 +125,7 @@ $posts_data = array(
           </ul>
 
           <h2>3. O Pipeline de Normalização (<code>normalizers.ts</code>)</h2>
-          <p>Funções puras transformam os payloads brutos nas interfaces de domínio <code>Post</code>, <code>Page</code>, <code>Category</code> e <code>Media</code>. O normalizador aplica:</p>
-          <pre><code>export function decodeHtmlEntities(value: string): string {
-  return value.replace(/&amp;(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);/g, (match, entity) =&gt; {
-    // Decodifica entidades nomeadas, hexadecimais e decimais
-    return NAMED_ENTITIES[entity] ?? match;
-  });
-}</code></pre>
-          <p>Dessa forma, os componentes <code>.astro</code> recebem dados 100% limpos e fortemente tipados, sem necessidade de sanitizações manuais no template.</p>
+          <p>Funções puras transformam os payloads brutos nas interfaces de domínio <code>Post</code>, <code>Page</code>, <code>Category</code> e <code>Media</code>. O normalizador aplica decodificação de entidades nomeadas, hexadecimais e numéricas, higienizando qualquer resquício de markup interno.</p>
         ',
     ),
     array(
@@ -158,11 +155,6 @@ npm run seed</code></pre>
 
           <h2>3. Configuração de Permalinks Amigáveis</h2>
           <p>No painel do WordPress em <em>Configurações &gt; Links Permanentes</em>, selecione <strong>Nome do post (/%postname%/)</strong>. Essa configuração é essencial para que o servidor web processe as rotas REST sem conflitos de rewrite.</p>
-
-          <h2>4. Deploy e Automação de CI</h2>
-          <p>Para validar a integridade do build estático antes do envio para produção, execute o smoke test de CI:</p>
-          <pre><code>npm run build:ci</code></pre>
-          <p>O comando compila o projeto contra um servidor fixture em memória e executa automaticamente a auditoria de orçamentos de performance (CSS &le; 25 KB, Zero-JS em páginas editoriais e CLS = 0).</p>
         ',
     ),
     array(
@@ -176,22 +168,7 @@ npm run seed</code></pre>
           <p>O AstroPress soluciona essa dor através de uma rota de renderização sob demanda dedicada (<code>export const prerender = false</code>) em <code>src/pages/preview.astro</code>.</p>
 
           <h2>2. O Handshake de Segurança Tokenizado</h2>
-          <p>O fluxo de preview opera com as seguintes etapas:</p>
-          <ol>
-            <li>O editor clica no botão "Visualizar" no Gutenberg ou Classic Editor no WordPress.</li>
-            <li>O plugin <strong>astropress-connector</strong> gera uma URL assinada: <code>https://seusite.com/preview?id=123&amp;type=post&amp;secret=token-secreto</code>.</li>
-            <li>O Astro consulta o endpoint seguro <code>/wp-json/astropress/v1/preview</code> no WordPress.</li>
-            <li>O plugin valida o segredo com comparação de hash resistente a timing attacks (<code>hash_equals</code>) e retorna a revisão/autosave mais recente.</li>
-          </ol>
-
-          <h2>3. Barra de Ferramentas e Proteção SEO</h2>
-          <p>Ao renderizar um rascunho, o Astro insere o componente <code>&lt;PreviewBanner /&gt;</code> fixado no topo, exibindo:</p>
-          <ul>
-            <li>Badge visual de "Rascunho Não Publicado".</li>
-            <li>Identificador numérico do post e status da revisão.</li>
-            <li>Link de 1 clique para retornar ao editor no <code>wp-admin</code>.</li>
-          </ul>
-          <p>Adicionalmente, a tag <code>&lt;meta name="robots" content="noindex,nofollow" /&gt;</code> é injetada obrigatoriamente para impedir que motores de busca indexem conteúdo confidencial em elaboração.</p>
+          <p>O plugin <strong>astropress-connector</strong> gera uma URL assinada ao clicar em "Visualizar": <code>https://seusite.com/preview?id=123&amp;type=post&amp;secret=token-secreto</code>. O Astro valida o token com a REST API via <code>hash_equals</code> e renderiza o rascunho com o componente <code>&lt;PreviewBanner /&gt;</code> e tag <code>noindex,nofollow</code>.</p>
         ',
     ),
     array(
@@ -201,35 +178,9 @@ npm run seed</code></pre>
         'excerpt' => 'Cascata inteligente de SEO de 4 níveis (Yoast / RankMath / Nativo / Defaults), Schema.org JSON-LD estruturado e pipeline de imagens com astro:assets.',
         'content' => '
           <h2>1. A Cascata de SEO em 4 Níveis</h2>
-          <p>O módulo <code>src/lib/wordpress/seo.ts</code> resolve automaticamente os metadados de cada página seguindo uma hierarquia de precedência estrita:</p>
-          <ol>
-            <li><strong>Yoast SEO (<code>yoast_head_json</code>):</strong> Ingestão de títulos customizados, meta descriptions, canonical URLs, diretivas de robots, Open Graph e Twitter Cards.</li>
-            <li><strong>Rank Math SEO (<code>rank_math_seo</code>):</strong> Suporte transparente às tags geradas pelo plugin Rank Math.</li>
-            <li><strong>Campos Nativos do WordPress:</strong> Extração automática de títulos, resumos textuais limpos e imagens de destaque anexadas.</li>
-            <li><strong>Defaults do Site (<code>src/config/site.ts</code>):</strong> Metadados de contingência para páginas sem configuração explícita.</li>
-          </ol>
-
-          <h2>2. Grafos Estruturados Schema.org JSON-LD</h2>
-          <p>Para garantir que o Google e outros motores de busca exibam Rich Snippets e sitelinks ricos, o sistema gera blocos JSON-LD semanticamente válidos:</p>
-          <ul>
-            <li><code>BlogPosting</code> em páginas de artigo, com dados de autor, data de publicação e imagem de capa.</li>
-            <li><code>BreadcrumbList</code> em todas as páginas internas para navegação hierárquica clara.</li>
-            <li><code>WebSite</code> na página inicial com declaração do nome e descrição canônica do projeto.</li>
-          </ul>
-
-          <h2>3. Pipeline de Imagens com astro:assets e Zero CLS</h2>
-          <p>O starter utiliza o componente oficial <code>&lt;Image /&gt;</code> do Astro, baixando e convertendo as imagens remotas do WordPress durante o build:</p>
-          <pre><code>&lt;Image
-  src={post.featuredImage.url}
-  alt={post.featuredImage.alt}
-  width={post.featuredImage.width}
-  height={post.featuredImage.height}
-  widths={[360, 540, 720, 1080]}
-  sizes="(max-width: 768px) 100vw, 33vw"
-  loading="lazy"
-  decoding="async"
-/&gt;</code></pre>
-          <p>Com a declaração explícita de largura e altura, o navegador reserva as dimensões da imagem no DOM antes mesmo do download dos bytes, travando o <strong>Cumulative Layout Shift (CLS) em zero absoluto</strong>.</p>
+          <p>O módulo <code>src/lib/wordpress/seo.ts</code> resolve automaticamente os metadados seguindo a ordem de prioridade: Yoast SEO &gt; Rank Math &gt; Campos Nativos WP &gt; Defaults do Site.</p>
+          <h2>2. Pipeline de Imagens com astro:assets e Zero CLS</h2>
+          <p>O starter utiliza o componente oficial <code>&lt;Image /&gt;</code> do Astro com dimensões explícitas, gerando variantes WebP/AVIF responsivas no build e eliminando completamente o layout shift.</p>
         ',
     ),
     array(
@@ -239,34 +190,9 @@ npm run seed</code></pre>
         'excerpt' => 'Como o comando npm run doctor e o motor de orçamentos de performance em budget.json garantem a estabilidade e velocidade do seu projeto em produção.',
         'content' => '
           <h2>1. Diagnóstico Automatizado com o Headless Doctor</h2>
-          <p>Sistemas desacoplados podem falhar silenciosamente se a API do CMS sofrer alterações ou se as credenciais de autenticação ficarem dessincronizadas. Para prevenir isso, o AstroPress inclui o motor <strong>Headless Doctor</strong> (<code>src/lib/doctor/</code>).</p>
-          <p>O utilitário pode ser executado via terminal ou acessado pelo navegador em <code>/doctor</code>, validando 7 baterias de testes em milissegundos:</p>
-          <ul>
-            <li><strong>Ambiente e Configuração:</strong> Validação de sintaxe de URLs no <code>.env</code> e presença de segredos.</li>
-            <li><strong>Conectividade e Latência:</strong> Ping HTTP e verificação do índice raiz <code>/wp-json/</code>.</li>
-            <li><strong>Endpoints REST Primários:</strong> Teste de resposta e paginação de <code>/posts</code>, <code>/pages</code> e <code>/categories</code>.</li>
-            <li><strong>Plugin AstroPress Connector:</strong> Verificação de versão, status dos redirects e webhooks de rebuild.</li>
-            <li><strong>Permalinks:</strong> Alerta se o WordPress estiver com a estrutura padrão <code>?p=123</code> em vez de <code>/%postname%/</code>.</li>
-            <li><strong>Plugins de SEO:</strong> Detecção automática de Yoast SEO e Rank Math.</li>
-            <li><strong>Draft Preview &amp; Imagens:</strong> Teste de handshake do segredo de preview e autorização de <code>remotePatterns</code>.</li>
-          </ul>
-
-          <h2>2. Orçamentos Estritos de Performance (<code>budget.json</code>)</h2>
-          <p>O arquivo declarativo <code>budget.json</code> estabelece as regras de ouro de velocidade do projeto:</p>
-          <pre><code>{
-  "budgets": {
-    "editorialJsMaxBytes": 0,
-    "interactiveJsMaxBytes": 20480,
-    "cssGlobalMaxBytes": 25600,
-    "htmlPageMaxBytes": 51200
-  },
-  "rules": {
-    "requireZeroEditorialJs": true,
-    "requireImageDimensions": true,
-    "requireImageAlt": true
-  }
-}</code></pre>
-          <p>O comando <code>npm run audit:perf</code> inspeciona todos os arquivos gerados no diretório <code>dist/</code> e bloqueia deploys que introduzam scripts não autorizados ou excedam os limites de tamanho estabelecidos.</p>
+          <p>O <strong>Headless Doctor</strong> (<code>npm run doctor</code> ou na rota <code>/doctor</code>) valida 7 categorias críticas: Ambiente, Conectividade, Endpoints REST, Plugin Connector, Permalinks, SEO e Preview Secret.</p>
+          <h2>2. Orçamentos Estritos de Performance</h2>
+          <p>O comando <code>npm run audit:perf</code> inspeciona o diretório <code>dist/</code> e garante que o build respeite os orçamentos (CSS &le; 25 KB, HTML &le; 50 KB e 0 KB JS editorial).</p>
         ',
     ),
 );
@@ -300,4 +226,83 @@ foreach ($posts_data as $p) {
     }
 }
 
-echo "🎉 Seeding concluído com sucesso! 6 artigos técnicos detalhados publicados no WordPress.\n";
+// 6. Insert 'About' Page (README in Site)
+$about_content = '
+<p class="lead">O <strong>AstroPress Headless Starter</strong> é uma base arquitetural moderna e opinativa projetada para equipes e desenvolvedores que desejam combinar o ecossistema editorial consolidado do WordPress com a velocidade, segurança e simplicidade do Astro 5.</p>
+
+<h2>🚀 Visão Geral da Arquitetura</h2>
+<p>O WordPress permanece como o <em>sistema editorial de registro</em> (CMS desacoplado), gerenciando posts, páginas, mídias, categorias e autores. Durante o processo de build, o Astro consulta a WordPress REST API e compila todo o site em puro HTML e CSS estático.</p>
+
+<pre><code>┌─────────────────────┐
+│    WordPress CMS    │  (Backend isolado: Gutenberg, mídias, taxonomias)
+└──────────┬──────────┘
+           │  REST API (/wp-json/wp/v2/* e /wp-json/astropress/v1/*)
+           ▼
+┌─────────────────────┐
+│   WordPress Client  │  (src/lib/wordpress/client.ts — timeout & paginação)
+└──────────┬──────────┘
+           │  Raw JSON
+           ▼
+┌─────────────────────┐
+│    Content Layer    │  (src/lib/wordpress/normalizers.ts — tipos puros)
+└──────────┬──────────┘
+           │  Normalized Post / Page / Category / Media
+           ▼
+┌─────────────────────┐
+│   Astro Frontend    │  (src/pages/**, src/components/** — Astro 5 SSG)
+└──────────┬──────────┘
+           │  HTML + CSS Estáticos (0 KB Client JS)
+           ▼
+┌─────────────────────┐
+│  Edge CDN / Deploy  │  (Cloudflare Pages, Vercel, Netlify, S3)
+└─────────────────────┘</code></pre>
+
+<h2>⚡ Quick Start em 3 Passos</h2>
+<ol>
+  <li><strong>Clone o repositório e instale as dependências:</strong>
+    <pre><code>git clone https://github.com/hd-rx8/AstroPress-Headless-Starter.git
+cd AstroPress-Headless-Starter
+npm install</code></pre>
+  </li>
+  <li><strong>Inicie o WordPress localmente via Docker (opcional):</strong>
+    <pre><code>docker compose up -d
+npm run seed</code></pre>
+  </li>
+  <li><strong>Inicie o servidor de desenvolvimento do Astro:</strong>
+    <pre><code>npm run dev</code></pre>
+  </li>
+</ol>
+
+<h2>🛠️ Principais Comandos do Projeto</h2>
+<ul>
+  <li><code>npm run dev</code> — Inicia o servidor de desenvolvimento Astro em <code>http://localhost:4321</code>.</li>
+  <li><code>npm run doctor</code> — Executa o utilitário Headless Doctor para validar 7 baterias de testes no WordPress.</li>
+  <li><code>npm run build:ci</code> — Executa o build de smoke test contra o servidor fixture em memória e valida os orçamentos de performance.</li>
+  <li><code>npm run audit:perf</code> — Inspeciona os arquivos compilados em <code>dist/</code> e emite relatório detalhado de peso e scripts por rota.</li>
+  <li><code>npm run seed</code> — Popula o banco de dados do WordPress local com os artigos e mídias de demonstração.</li>
+  <li><code>npm test</code> — Executa a suíte de testes unitários e de integração com Vitest.</li>
+</ul>
+
+<h2>🔒 Segurança & Performance Intransigente</h2>
+<p>Em um site estático gerado com AstroPress:</p>
+<ul>
+  <li><strong>Zero Vulnerabilidade SQL/PHP no Frontend:</strong> Os visitantes acessam arquivos HTML estáticos hospedados na CDN, sem qualquer contato com o banco de dados ou execução de código PHP.</li>
+  <li><strong>Zero Client JavaScript em Páginas de Conteúdo:</strong> Artigos e páginas institucionais não carregam frameworks JS no navegador, garantindo pontuações perfeitas de 100/100 no Google Lighthouse e Core Web Vitals impecáveis.</li>
+</ul>
+';
+
+$about_page_id = wp_insert_post(array(
+    'post_title' => 'Sobre o AstroPress',
+    'post_name' => 'about',
+    'post_content' => trim($about_content),
+    'post_excerpt' => 'Conheça a arquitetura, objetivos e documentação completa do AstroPress Headless Starter.',
+    'post_status' => 'publish',
+    'post_type' => 'page',
+    'post_author' => $author_id,
+));
+
+if (!is_wp_error($about_page_id)) {
+    echo "✓ Página 'Sobre o AstroPress' criada com sucesso (ID: {$about_page_id})\n";
+}
+
+echo "🎉 Seeding completo! 6 artigos e página 'Sobre' publicados no WordPress.\n";

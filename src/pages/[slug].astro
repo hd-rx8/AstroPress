@@ -9,8 +9,8 @@
 import PostContent from '../components/PostContent.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { pagePath } from '../lib/routes';
-import { getAllPages, getSeoData } from '../lib/wordpress';
 import type { Page } from '../lib/wordpress';
+import { getAllPages, getSeoData } from '../lib/wordpress';
 
 export async function getStaticPaths() {
   const pages = await getAllPages();
@@ -32,13 +32,14 @@ const metadata = getSeoData({
   description: page.excerpt,
   path: pagePath(page.slug),
 });
-
 ---
 
 <BaseLayout metadata={metadata}>
-  <article>
+  <article class="prose">
     <header class="page-header">
+      <span class="hero__badge">Página Institucional</span>
       <h1 class="page-header__title">{page.title}</h1>
+      {page.excerpt && <p class="page-header__meta">{page.excerpt}</p>}
     </header>
     <PostContent html={page.content} />
   </article>
