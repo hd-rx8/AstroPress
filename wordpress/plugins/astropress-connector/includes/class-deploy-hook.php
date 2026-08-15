@@ -36,7 +36,14 @@ class AstroPress_Deploy_Hook {
 
         if ($new_status === 'publish' || $old_status === 'publish') {
             $reason = sprintf('Post #%d "%s" transitioned from %s to %s', $post->ID, $post->post_title, $old_status, $new_status);
-            $this->dispatch_deploy_webhook($reason);
+            $post_data = [
+                'id'              => $post->ID,
+                'type'            => $post->post_type,
+                'slug'            => $post->post_name,
+                'status'          => $new_status,
+                'previous_status' => $old_status,
+            ];
+            $this->dispatch_deploy_webhook($reason, false, $post_data);
         }
     }
 
@@ -53,7 +60,14 @@ class AstroPress_Deploy_Hook {
 
         if ($post->post_status === 'publish') {
             $reason = sprintf('Post #%d "%s" was trashed or deleted', $post->ID, $post->post_title);
-            $this->dispatch_deploy_webhook($reason);
+            $post_data = [
+                'id'              => $post->ID,
+                'type'            => $post->post_type,
+                'slug'            => $post->post_name,
+                'status'          => 'trash',
+                'previous_status' => 'publish',
+            ];
+            $this->dispatch_deploy_webhook($reason, false, $post_data);
         }
     }
 
@@ -62,9 +76,10 @@ class AstroPress_Deploy_Hook {
      *
      * @param string $reason Context description of why deploy was triggered.
      * @param bool   $force  Whether to bypass debounce (used by manual rebuild button).
+     * @param array|null $post_data Optional post context data.
      * @return bool
      */
-    public function dispatch_deploy_webhook($reason = 'Content update', $force = false) {
+    public function dispatch_deploy_webhook($reason = 'Content update', $force = false, $post_data = null) {
         $hook_url = esc_url_raw(astropress_get_option('astropress_deploy_hook_url', ''));
         if (empty($hook_url)) {
             return false;
@@ -81,14 +96,20 @@ class AstroPress_Deploy_Hook {
         }
 
         $payload = [
-            'source'    => 'AstroPress Connector',
-            'reason'    => $reason,
-            'timestamp' => time(),
-            'site'      => get_bloginfo('name'),
+            'source'          => 'AstroPress Connector',
+            'reason'          => $reason,
+            'timestamp'       => time(),
+            'site'            => get_bloginfo('name'),
+            'event'           => $post_data ? 'post_transition' : 'manual_rebuild',
+            'post_id'         => $post_data && isset($post_data['id']) ? $post_data['id'] : null,
+            'post_type'       => $post_data && isset($post_data['type']) ? $post_data['type'] : null,
+            'slug'            => $post_data && isset($post_data['slug']) ? $post_data['slug'] : null,
+            'status'          => $post_data && isset($post_data['status']) ? $post_data['status'] : null,
+            'previous_status' => $post_data && isset($post_data['previous_status']) ? $post_data['previous_status'] : null,
         ];
 
         // Non-blocking POST so the user's admin save response is instant
-        wp_remote_post($hook_url, [
+        $response = wp_remote_post($hook_url, [
             'method'    => 'POST',
             'timeout'   => 5,
             'blocking'  => false,
@@ -98,6 +119,22 @@ class AstroPress_Deploy_Hook {
             ],
             'body'      => wp_json_encode($payload),
         ]);
+
+        // Record deployment in local history
+        $history = get_option('astropress_deploy_history', []);
+        if (!is_array($history)) {
+            $history = [];
+        }
+        $history[] = [
+            'time'      => current_time('mysql'),
+            'reason'    => $reason,
+            'post_id'   => $post_data && isset($post_data['id']) ? $post_data['id'] : null,
+            'http_code' => is_wp_error($response) ? 500 : 200,
+        ];
+        if (count($history) > 5) {
+            $history = array_slice($history, -5);
+        }
+        update_option('astropress_deploy_history', $history, false);
 
         return true;
     }

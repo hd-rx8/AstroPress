@@ -63,6 +63,23 @@ class AstroPress_Redirects {
         $base = rtrim($frontend_url, '/');
         $target = $base . '/';
 
+        if (is_preview()) {
+            $post_id = get_the_ID();
+            $post = get_post($post_id);
+            $secret = astropress_get_option('astropress_preview_secret', '');
+            if ($post && !empty($secret)) {
+                $target = sprintf(
+                    '%s/preview?id=%d&type=%s&secret=%s',
+                    $base,
+                    $post->ID,
+                    $post->post_type,
+                    rawurlencode($secret)
+                );
+                wp_redirect($target, 302);
+                exit;
+            }
+        }
+
         if (is_front_page() || is_home()) {
             $target = $base . '/';
         } elseif (is_singular('post')) {
@@ -122,11 +139,22 @@ class AstroPress_Redirects {
      */
     public function filter_preview_post_link($preview_link, $post) {
         $frontend_url = esc_url_raw(astropress_get_option('astropress_frontend_url', ''));
+        $secret       = astropress_get_option('astropress_preview_secret', '');
         if (empty($frontend_url) || !is_object($post)) {
             return $preview_link;
         }
 
         $base = rtrim($frontend_url, '/');
+        if (!empty($secret)) {
+            return sprintf(
+                '%s/preview?id=%d&type=%s&secret=%s',
+                $base,
+                $post->ID,
+                $post->post_type,
+                rawurlencode($secret)
+            );
+        }
+
         if ($post->post_type === 'post') {
             return $base . '/blog/' . $post->post_name . '/';
         }
