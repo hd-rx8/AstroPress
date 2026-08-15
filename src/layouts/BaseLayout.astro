@@ -29,6 +29,14 @@ const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : 
     <link rel="canonical" href={metadata.canonical} />
     <meta name="robots" content={metadata.robots} />
 
+    <!-- Google Fonts: Plus Jakarta Sans (Display) + Inter (Body) + JetBrains Mono (Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={metadata.openGraph.title} />
     <meta property="og:description" content={metadata.openGraph.description} />
