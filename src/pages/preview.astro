@@ -1,0 +1,112 @@
+---
+/**
+ * On-demand Draft Preview route.
+ *
+ * Renders unpublished WordPress posts and pages dynamically with live revisions,
+ * strict noindex SEO directives, and an editorial PreviewBanner toolbar.
+ */
+export const prerender = false;
+
+import { Image } from 'astro:assets';
+import PostContent from '../components/PostContent.astro';
+import PreviewBanner from '../components/PreviewBanner.astro';
+import { env } from '../config/env';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getDraftPreview, getSeoData } from '../lib/wordpress';
+import type { Page, Post } from '../lib/wordpress';
+
+const idParam = Astro.url.searchParams.get('id');
+const typeParam = Astro.url.searchParams.get('type');
+const secret = Astro.url.searchParams.get('secret') ?? '';
+
+const type: 'post' | 'page' = typeParam === 'page' ? 'page' : 'post';
+const postId = idParam ? parseInt(idParam, 10) : NaN;
+
+let draft: Post | Page | null = null;
+let errorMessage: string | null = null;
+
+if (isNaN(postId) || postId <= 0) {
+  errorMessage = 'ID de post/página inválido ou não fornecido.';
+  Astro.response.status = 400;
+} else {
+  try {
+    draft = await getDraftPreview(postId, type, secret);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('401') || message.includes('secret') || message.includes('forbidden')) {
+      errorMessage = 'Acesso não autorizado: chave secreta de preview inválida ou ausente.';
+      Astro.response.status = 401;
+    } else {
+      errorMessage = `Não foi possível carregar o rascunho #${postId}. Verifique se o post existe no WordPress.`;
+      Astro.response.status = 404;
+    }
+  }
+}
+
+const metadata = getSeoData({
+  title: draft ? `[Preview] ${draft.title}` : 'Visualização de Rascunho',
+  description: draft?.excerpt ?? 'Pré-visualização de conteúdo em rascunho.',
+  path: `/preview?id=${idParam ?? ''}`,
+  robots: 'noindex,nofollow',
+});
+
+const isPost = (item: Post | Page): item is Post => 'author' in item || 'featuredImage' in item;
+const editUrl = `${env.wordpressUrl.origin}/wp-admin/post.php?post=${postId}&action=edit`;
+---
+
+<BaseLayout metadata={metadata}>
+  {
+    errorMessage ? (
+      <div class="prose" style="text-align: center; padding-block: 4rem;">
+        <h1 style="color: #dc2626;">⚠️ Erro de Visualização</h1>
+        <p>{errorMessage}</p>
+        <p style="margin-top: 2rem;">
+          <a href="/" class="btn btn--primary">Voltar para a Página Inicial</a>
+        </p>
+      </div>
+    ) : draft ? (
+      <>
+        <PreviewBanner postId={postId} postType={type} editUrl={editUrl} />
+        <article>
+          <header class="page-header">
+            <h1 class="page-header__title">{draft.title}</h1>
+            <p class="page-header__meta">
+              <time datetime={draft.date}>
+                {new Date(draft.date).toLocaleDateString('pt-BR', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </time>
+              {isPost(draft) && draft.author && <> · {draft.author.name}</>}
+            </p>
+            {isPost(draft) && draft.featuredImage && (
+              <div class="page-header__image">
+                {draft.featuredImage.width && draft.featuredImage.height ? (
+                  <Image
+                    src={draft.featuredImage.url}
+                    alt={draft.featuredImage.alt}
+                    width={draft.featuredImage.width}
+                    height={draft.featuredImage.height}
+                    widths={[480, 800, 1200]}
+                    sizes="(max-width: 800px) 100vw, 800px"
+                    loading="eager"
+                    decoding="async"
+                  />
+                ) : (
+                  <img
+                    src={draft.featuredImage.url}
+                    alt={draft.featuredImage.alt}
+                    loading="eager"
+                    decoding="async"
+                  />
+                )}
+              </div>
+            )}
+          </header>
+          <PostContent html={draft.content} />
+        </article>
+      </>
+    ) : null
+  }
+</BaseLayout>
