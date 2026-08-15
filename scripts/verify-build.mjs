@@ -4,8 +4,9 @@
  *
  * Starts the in-memory fixture WordPress server on a random local port,
  * runs `astro build` against it with a fake, local-only `SITE_URL`, then
- * asserts the expected static output files exist. Never touches a public
- * WordPress server, so it works offline and in CI.
+ * asserts the expected static output files exist and satisfy strict
+ * performance budgets. Never touches a public WordPress server, so it
+ * works offline and in CI.
  *
  * The fixture server is always closed in a `finally` block, even if the
  * build itself fails, so this script never leaves a stray process behind.
@@ -16,6 +17,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { auditDistDirectory, DEFAULT_BUDGET_CONFIG } from '../src/lib/performance/index.ts';
 import { startFixtureWordPressServer } from './fixture-wp-server.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -38,19 +40,6 @@ const EXPECTED_FILES = [
 
 /**
  * Asserts what the build actually *emitted*, not merely that files exist.
- *
- * File-existence checks alone cannot catch rendering or configuration
- * regressions: a broken JSON-LD tag or a sitemap generated against the wrong
- * host both still produce every expected file. A JSON-LD regression reached
- * review exactly that way, which is what the JSON-LD check below guards.
- *
- * Note on scope: this script injects SITE_URL through `process.env`, so the
- * host-consistency checks verify that every emitted URL agrees with the host
- * the build was given — they do NOT by themselves cover the config phase
- * failing to read `.env`, since that path is not exercised here. The
- * regression test for that specific defect is `pickEnvValue` in
- * `tests/config/env.test.ts`; these assertions are the broader net that
- * catches any placeholder or mismatched host reaching real output.
  *
  * @param {string} distDir
  */
@@ -86,8 +75,6 @@ function verifyBuildOutput(distDir) {
   );
 
   // 2..4. Every emitted absolute URL agrees on the host the build was given.
-  //    The sitemap check is the one that catches a config phase that cannot
-  //    see SITE_URL and silently falls back to a placeholder host.
   const homeHtml = read('index.html');
   const canonical = /<link rel="canonical" href="([^"]+)"/.exec(homeHtml)?.[1];
   assert(canonical?.startsWith(SITE_URL), `home canonical is "${canonical}", expected it to start with "${SITE_URL}"`);
@@ -171,8 +158,14 @@ async function main() {
 
     verifyBuildOutput(distDir);
 
+    // 8. Performance Budget Assertions
+    const perfReport = await auditDistDirectory(distDir, DEFAULT_BUDGET_CONFIG);
+    if (!perfReport.passed) {
+      throw new Error(`Performance Budget violation(s):\n${perfReport.violations.join('\n')}`);
+    }
+
     console.log(
-      `build:ci OK — verified ${EXPECTED_FILES.length} output file(s) and their contents in dist/.`,
+      `build:ci OK — verified ${EXPECTED_FILES.length} output file(s) and passed all performance budgets in dist/.`,
     );
   } finally {
     await fixture.close();

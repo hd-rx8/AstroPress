@@ -10,6 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "doctor": "node scripts/doctor.mjs",
+    "audit:perf": "node scripts/audit-performance.mjs",
     "typecheck": "astro check",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
