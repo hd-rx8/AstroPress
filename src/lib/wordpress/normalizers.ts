@@ -103,23 +103,43 @@ function requireField<T>(value: T | undefined | null, entity: string, field: str
   return value;
 }
 
+/**
+ * Reads an embedded record's field only when it is genuinely a string.
+ *
+ * `_embed` entries cannot be trusted to hold the record they advertise: when
+ * a featured image or author is unreadable (deleted attachment, restricted
+ * user, insufficient permissions), WordPress does not return an empty array
+ * — it returns an array containing an *error object*, e.g.
+ * `[{ code: 'rest_forbidden', message: '...', data: { status: 401 } }]`.
+ * Checking only for array emptiness would let that stub through and produce
+ * `undefined` where a `string` is declared (rendering `src="undefined"`).
+ */
+function readEmbeddedString(value: unknown): string | undefined {
+  return typeof value === 'string' && value !== '' ? value : undefined;
+}
+
+/** Returns `undefined` for an absent, empty, or error-stub featured-media embed. */
 function normalizeFeaturedImage(media: WordPressRawFeaturedMedia[] | undefined): FeaturedImage | undefined {
   const first = media?.[0];
-  if (!first) {
+  const url = readEmbeddedString(first?.source_url);
+  if (url === undefined) {
     return undefined;
   }
   return {
-    url: first.source_url,
-    alt: first.alt_text ?? '',
+    url,
+    alt: readEmbeddedString(first?.alt_text) ?? '',
   };
 }
 
+/** Returns `undefined` for an absent, empty, or error-stub author embed. */
 function normalizeAuthor(authors: WordPressRawAuthor[] | undefined): PostAuthor | undefined {
   const first = authors?.[0];
-  if (!first) {
+  const name = readEmbeddedString(first?.name);
+  const slug = readEmbeddedString(first?.slug);
+  if (name === undefined || slug === undefined) {
     return undefined;
   }
-  return { name: first.name, slug: first.slug };
+  return { name, slug };
 }
 
 function normalizeExcerpt(excerpt: { rendered: string } | undefined): string | undefined {
