@@ -31,7 +31,7 @@ export interface Metadata {
 }
 
 export interface BuildMetadataInput {
-  title: string;
+  title?: string;
   description?: string;
   path: string;
   imageUrl?: string;
@@ -39,7 +39,10 @@ export interface BuildMetadataInput {
    * Defaults to `'index,follow'`. Pass `'noindex,follow'` to keep a page out
    * of search results while still letting crawlers follow its links.
    */
-  robots?: 'index,follow' | 'noindex,follow';
+  robots?: 'index,follow' | 'noindex,follow' | string;
+  canonical?: string;
+  openGraph?: Partial<OpenGraphMetadata>;
+  twitter?: Partial<TwitterMetadata>;
 }
 
 /**
@@ -50,26 +53,38 @@ export interface BuildMetadataInput {
  * given, and the Twitter card is `summary_large_image` only in that case —
  * otherwise it is the plain `summary` card.
  */
-export function buildMetadata({ title, description, path, imageUrl, robots }: BuildMetadataInput): Metadata {
-  const canonical = new URL(path, env.siteUrl).toString();
+export function buildMetadata({
+  title,
+  description,
+  path,
+  imageUrl,
+  robots,
+  canonical,
+  openGraph,
+  twitter,
+}: BuildMetadataInput): Metadata {
+  const resolvedCanonical = canonical ?? new URL(path, env.siteUrl).toString();
+  const resolvedTitle = title && title.trim() !== '' ? title : SITE.name;
   const resolvedDescription = description && description.trim() !== '' ? description : SITE.description;
 
   return {
-    title,
+    title: resolvedTitle,
     description: resolvedDescription,
-    canonical,
+    canonical: resolvedCanonical,
     robots: robots ?? 'index,follow',
     openGraph: {
-      title,
-      description: resolvedDescription,
-      url: canonical,
-      ...(imageUrl ? { image: imageUrl } : {}),
+      title: openGraph?.title ?? resolvedTitle,
+      description: openGraph?.description ?? resolvedDescription,
+      url: openGraph?.url ?? resolvedCanonical,
+      ...(imageUrl || openGraph?.image ? { image: openGraph?.image ?? imageUrl } : {}),
     },
     twitter: {
-      card: imageUrl ? 'summary_large_image' : 'summary',
+      card: twitter?.card ?? (imageUrl || openGraph?.image ? 'summary_large_image' : 'summary'),
     },
   };
 }
+
+
 
 
 /**

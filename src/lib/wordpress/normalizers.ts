@@ -72,7 +72,7 @@ export class WordPressContractError extends Error {
 }
 
 /** Collapses runs of whitespace (including newlines) into single spaces and trims. */
-function collapseWhitespace(value: string): string {
+export function collapseWhitespace(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
@@ -98,7 +98,7 @@ const NAMED_ENTITIES: Record<string, string> = {
 };
 
 /** Decodes named and numeric (decimal/hex) HTML entities, e.g. `&#8217;` -> `'`, `&amp;` -> `&`. */
-function decodeHtmlEntities(value: string): string {
+export function decodeHtmlEntities(value: string): string {
   return value.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);/g, (match, entity: string) => {
     if (entity[0] === '#') {
       const codePoint =
@@ -110,9 +110,10 @@ function decodeHtmlEntities(value: string): string {
 }
 
 /** Strips HTML tags, decodes entities, then collapses whitespace. */
-function stripHtml(value: string): string {
+export function stripHtml(value: string): string {
   return collapseWhitespace(decodeHtmlEntities(value.replace(/<[^>]*>/g, ' ')));
 }
+
 
 function requireField<T>(value: T | undefined | null, entity: string, field: string): T {
   if (value === undefined || value === null) {
