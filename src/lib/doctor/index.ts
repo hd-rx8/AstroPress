@@ -10,6 +10,16 @@ import {
 } from './checks';
 import type { DoctorCategoryReport, DoctorReport, DoctorRunnerOptions } from './types';
 
+export {
+  checkConnectivity,
+  checkConnectorPlugin,
+  checkEnvironment,
+  checkImageConfiguration,
+  checkPreviewHandshake,
+  checkRestEndpoints,
+  checkSeoIngestion,
+} from './checks';
+
 export type { CheckStatus, DoctorCategoryReport, DoctorCheck, DoctorReport, DoctorRunnerOptions } from './types';
 
 /**
