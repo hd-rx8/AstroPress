@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "budgets": {
+    "editorialJsMaxBytes": 0,
+    "interactiveJsMaxBytes": 20480,
+    "cssGlobalMaxBytes": 25600,
+    "htmlPageMaxBytes": 51200,
+    "imageMaxBytes": 358400
+  },
+  "rules": {
+    "requireImageDimensions": true,
+    "requireImageAlt": true,
+    "requireZeroEditorialJs": true,
+    "allowedImageExtensions": [".webp", ".avif", ".svg", ".png", ".jpg", ".jpeg"]
+  }
+}
