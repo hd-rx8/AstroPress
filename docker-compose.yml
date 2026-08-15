@@ -13,6 +13,7 @@ services:
     # WordPress and never connects to the database directly.
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./wordpress/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   wordpress:
     image: wordpress:6
@@ -28,6 +29,9 @@ services:
       - "127.0.0.1:8080:80"
     volumes:
       - wordpress_data:/var/www/html
+      - ./wordpress/plugins/astropress-connector:/var/www/html/wp-content/plugins/astropress-connector
+      - ./wordpress/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./wordpress/uploads:/var/www/html/wp-content/uploads
 
 volumes:
   mysql_data:
