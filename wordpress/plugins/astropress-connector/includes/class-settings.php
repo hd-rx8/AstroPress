@@ -31,6 +31,12 @@ class AstroPress_Settings {
             'default'           => '',
         ]);
 
+        register_setting('astropress_settings_group', 'astropress_preview_secret', [
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default'           => '',
+        ]);
+
         register_setting('astropress_settings_group', 'astropress_deploy_hook_url', [
             'type'              => 'string',
             'sanitize_callback' => 'esc_url_raw',
@@ -60,6 +66,14 @@ class AstroPress_Settings {
             'astropress_frontend_url',
             __('URL do Frontend Astro', 'astropress-connector'),
             [$this, 'render_frontend_url_field'],
+            'astropress-connector',
+            'astropress_main_section'
+        );
+
+        add_settings_field(
+            'astropress_preview_secret',
+            __('Segredo de Preview (Draft Secret)', 'astropress-connector'),
+            [$this, 'render_preview_secret_field'],
             'astropress-connector',
             'astropress_main_section'
         );
@@ -107,6 +121,23 @@ class AstroPress_Settings {
         <?php
     }
 
+    public function render_preview_secret_field() {
+        $constant_set = defined('ASTROPRESS_PREVIEW_SECRET');
+        $value = astropress_get_option('astropress_preview_secret', '');
+        ?>
+        <input type="password" name="astropress_preview_secret" value="<?php echo esc_attr($value); ?>" class="regular-text" id="astropress_preview_secret_input" <?php disabled($constant_set); ?> placeholder="ex: chave-secreta-super-segura" />
+        <button type="button" class="button button-secondary" onclick="var el = document.getElementById('astropress_preview_secret_input'); el.type = el.type === 'password' ? 'text' : 'password';">
+            👁️ <?php esc_html_e('Mostrar/Ocultar', 'astropress-connector'); ?>
+        </button>
+        <p class="description">
+            <?php esc_html_e('Token secreto compartilhado com a variável ASTROPRESS_PREVIEW_SECRET no Astro para autenticar a visualização de rascunhos.', 'astropress-connector'); ?>
+            <?php if ($constant_set): ?>
+                <strong style="color: #2563eb;"><?php esc_html_e('(Definido via constante ASTROPRESS_PREVIEW_SECRET no wp-config.php)', 'astropress-connector'); ?></strong>
+            <?php endif; ?>
+        </p>
+        <?php
+    }
+
     public function render_enable_redirect_field() {
         $constant_set = defined('ASTROPRESS_ENABLE_REDIRECT');
         $value = (bool) astropress_get_option('astropress_enable_redirect', true);
@@ -147,6 +178,8 @@ class AstroPress_Settings {
         if (!current_user_can('manage_options')) {
             return;
         }
+
+        $deploy_history = get_option('astropress_deploy_history', array());
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
@@ -158,10 +191,51 @@ class AstroPress_Settings {
                 ?>
             </form>
             <hr />
-            <h2><?php esc_html_e('Diagnóstico e Health Check', 'astropress-connector'); ?></h2>
+            <h2><?php esc_html_e('Histórico de Deploys Recentes', 'astropress-connector'); ?></h2>
+            <?php if (empty($deploy_history)): ?>
+                <p><em><?php esc_html_e('Nenhum webhook disparado ainda.', 'astropress-connector'); ?></em></p>
+            <?php else: ?>
+                <table class="widefat striped" style="max-width: 800px; margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Data / Hora', 'astropress-connector'); ?></th>
+                            <th><?php esc_html_e('Motivo', 'astropress-connector'); ?></th>
+                            <th><?php esc_html_e('Post ID', 'astropress-connector'); ?></th>
+                            <th><?php esc_html_e('Status HTTP', 'astropress-connector'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach (array_reverse((array)$deploy_history) as $entry): ?>
+                            <tr>
+                                <td><?php echo esc_html(isset($entry['time']) ? $entry['time'] : 'N/A'); ?></td>
+                                <td><code><?php echo esc_html(isset($entry['reason']) ? $entry['reason'] : 'N/A'); ?></code></td>
+                                <td><?php echo esc_html(isset($entry['post_id']) && $entry['post_id'] ? '#' . $entry['post_id'] : '—'); ?></td>
+                                <td>
+                                    <?php
+                                    $code = isset($entry['http_code']) ? intval($entry['http_code']) : 0;
+                                    if ($code >= 200 && $code < 300) {
+                                        echo '<span style="color: #16a34a; font-weight: 600;">✓ ' . esc_html($code) . ' OK</span>';
+                                    } elseif ($code > 0) {
+                                        echo '<span style="color: #dc2626; font-weight: 600;">✕ ' . esc_html($code) . ' Erro</span>';
+                                    } else {
+                                        echo '<span style="color: #6b7280;">N/A</span>';
+                                    }
+                                    ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+            <hr />
+            <h2><?php esc_html_e('Diagnóstico e Endpoints REST', 'astropress-connector'); ?></h2>
             <p>
-                <?php esc_html_e('Endpoint de saúde da REST API:', 'astropress-connector'); ?>
+                <strong><?php esc_html_e('Endpoint de Saúde:', 'astropress-connector'); ?></strong>
                 <code><a href="<?php echo esc_url(rest_url('astropress/v1/health')); ?>" target="_blank"><?php echo esc_html(rest_url('astropress/v1/health')); ?></a></code>
+            </p>
+            <p>
+                <strong><?php esc_html_e('Endpoint de Preview de Rascunhos:', 'astropress-connector'); ?></strong>
+                <code><?php echo esc_html(rest_url('astropress/v1/preview?id={id}&secret={secret}')); ?></code>
             </p>
         </div>
         <?php
