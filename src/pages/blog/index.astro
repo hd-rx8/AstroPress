@@ -6,22 +6,27 @@
 import Pagination from '../../components/Pagination.astro';
 import PostCard from '../../components/PostCard.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { buildMetadata } from '../../lib/seo/metadata';
-import { BLOG_PAGE_SIZE, getPosts } from '../../lib/wordpress';
+import { BLOG_PAGE_SIZE, buildBreadcrumbsJsonLd, getPosts, getSeoData } from '../../lib/wordpress';
 
 const { posts, pagination } = await getPosts({ page: 1, perPage: BLOG_PAGE_SIZE });
 
-const metadata = buildMetadata({
+const metadata = getSeoData({
   title: 'Blog',
   path: '/blog/',
 });
+
+const jsonLd = buildBreadcrumbsJsonLd([
+  { name: 'Home', url: '/' },
+  { name: 'Blog', url: '/blog/' },
+]);
 ---
 
-<BaseLayout metadata={metadata}>
+<BaseLayout metadata={metadata} jsonLd={jsonLd}>
   <h1>Blog</h1>
   <ul class="card-grid">
     {posts.map((post) => <PostCard post={post} />)}
   </ul>
   <Pagination page={pagination.page} totalPages={pagination.totalPages} />
 </BaseLayout>
+
 

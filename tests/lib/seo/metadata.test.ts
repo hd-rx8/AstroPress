@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { SITE } from '../../../src/config/site';
-import { buildMetadata, buildPostJsonLd } from '../../../src/lib/seo/metadata';
+import {
+  buildBreadcrumbsJsonLd,
+  buildMetadata,
+  buildPostJsonLd,
+  buildWebsiteJsonLd,
+} from '../../../src/lib/seo/metadata';
 import type { Post } from '../../../src/lib/wordpress/normalizers';
 import { postWithoutEmbeddedData, wordpressPostFixture } from '../../fixtures/wordpress';
 import { normalizePost } from '../../../src/lib/wordpress/normalizers';
@@ -66,7 +71,6 @@ describe('buildMetadata', () => {
   });
 });
 
-
 describe('buildPostJsonLd', () => {
   const canonicalUrl = 'https://www.example.com/blog/hello-world/';
 
@@ -94,3 +98,51 @@ describe('buildPostJsonLd', () => {
     expect(buildPostJsonLd(post, canonicalUrl)).not.toHaveProperty('image');
   });
 });
+
+describe('buildBreadcrumbsJsonLd', () => {
+  it('builds a Schema.org BreadcrumbList from item pairs', () => {
+    const breadcrumbs = [
+      { name: 'Home', url: 'https://www.example.com/' },
+      { name: 'Blog', url: 'https://www.example.com/blog/' },
+      { name: 'Post Title', url: 'https://www.example.com/blog/post-title/' },
+    ];
+    expect(buildBreadcrumbsJsonLd(breadcrumbs)).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: 'https://www.example.com/',
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Blog',
+          item: 'https://www.example.com/blog/',
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: 'Post Title',
+          item: 'https://www.example.com/blog/post-title/',
+        },
+      ],
+    });
+  });
+});
+
+describe('buildWebsiteJsonLd', () => {
+  it('builds a WebSite / Organization Schema.org payload', () => {
+    expect(buildWebsiteJsonLd()).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: SITE.name,
+      url: 'https://www.example.com/',
+      description: SITE.description,
+    });
+  });
+
+});
+

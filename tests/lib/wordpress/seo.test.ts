@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildMetadata } from '../../../src/lib/seo/metadata';
-import { getSeoData } from '../../../src/lib/wordpress/seo';
+import { buildMetadata, buildPostJsonLd } from '../../../src/lib/seo/metadata';
+import { normalizePost } from '../../../src/lib/wordpress/normalizers';
+import { getJsonLdGraph, getSeoData } from '../../../src/lib/wordpress/seo';
 import {
   postWithPartialSeoFixture,
   postWithRankMathFixture,
   postWithYoastSeoFixture,
+  wordpressPostFixture,
 } from '../../fixtures/wordpress';
 
 describe('getSeoData', () => {
@@ -48,3 +50,22 @@ describe('getSeoData with SEO plugins', () => {
     expect(seo.description).toBe('A short excerpt.');
   });
 });
+
+describe('getJsonLdGraph', () => {
+  it('returns Yoast schema when raw.yoast_head_json.schema is present', () => {
+    const jsonLd = getJsonLdGraph(postWithYoastSeoFixture, 'https://www.example.com/blog/yoast-post/');
+    expect(jsonLd).toEqual(postWithYoastSeoFixture.yoast_head_json?.schema);
+  });
+
+  it('returns Rank Math schema when raw.rank_math_seo.schema is present', () => {
+    const jsonLd = getJsonLdGraph(postWithRankMathFixture, 'https://www.example.com/blog/rank-math-post/');
+    expect(jsonLd).toEqual(postWithRankMathFixture.rank_math_seo?.schema);
+  });
+
+  it('falls back to buildPostJsonLd for a normalized Post without plugin schema', () => {
+    const post = normalizePost(wordpressPostFixture);
+    const canonical = 'https://www.example.com/blog/hello-world/';
+    expect(getJsonLdGraph(post, canonical)).toEqual(buildPostJsonLd(post, canonical));
+  });
+});
+

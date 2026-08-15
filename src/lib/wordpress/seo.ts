@@ -8,12 +8,13 @@
  * 4. Site Defaults (SITE.name, SITE.description)
  */
 
-import { buildMetadata, buildPostJsonLd } from '../seo/metadata';
+import { buildBreadcrumbsJsonLd, buildMetadata, buildPostJsonLd, buildWebsiteJsonLd } from '../seo/metadata';
 import type { BuildMetadataInput, Metadata } from '../seo/metadata';
 import { collapseWhitespace, decodeHtmlEntities, stripHtml } from './normalizers';
+import type { Post } from './normalizers';
 import type { WordPressRawPage, WordPressRawPost } from './types';
 
-export type { Metadata } from '../seo/metadata';
+export type { BreadcrumbItem, Metadata } from '../seo/metadata';
 
 export interface WordPressSeoOptions extends Partial<BuildMetadataInput> {
   raw?: WordPressRawPost | WordPressRawPage;
@@ -116,4 +117,42 @@ export function getSeoData(input: SeoInput): Metadata {
   });
 }
 
-export { buildPostJsonLd };
+/** Extracts the JSON-LD structured data graph, preferring Yoast or Rank Math schema when available. */
+export function getJsonLdGraph(
+  postOrRaw: WordPressRawPost | WordPressRawPage | Post,
+  canonicalUrl: string,
+): Record<string, unknown> {
+  if ('yoast_head_json' in postOrRaw && postOrRaw.yoast_head_json?.schema) {
+    return postOrRaw.yoast_head_json.schema;
+  }
+  if ('rank_math_seo' in postOrRaw && postOrRaw.rank_math_seo?.schema) {
+    return postOrRaw.rank_math_seo.schema;
+  }
+  if ('content' in postOrRaw && typeof postOrRaw.content === 'string' && typeof postOrRaw.title === 'string') {
+    return buildPostJsonLd(postOrRaw as Post, canonicalUrl);
+  }
+  const rawPost = postOrRaw as WordPressRawPost;
+  const post: Post = {
+    id: rawPost.id,
+    slug: rawPost.slug,
+    date: rawPost.date,
+    title: typeof rawPost.title === 'string' ? rawPost.title : rawPost.title?.rendered ?? '',
+    content: typeof rawPost.content === 'string' ? rawPost.content : rawPost.content?.rendered ?? '',
+    featuredImage: rawPost._embedded?.['wp:featuredmedia']?.[0]?.source_url
+      ? {
+          url: rawPost._embedded['wp:featuredmedia'][0].source_url,
+          alt: rawPost._embedded['wp:featuredmedia'][0].alt_text ?? '',
+        }
+      : undefined,
+    author:
+      rawPost._embedded?.author?.[0]?.name && rawPost._embedded.author[0].slug
+        ? {
+            name: rawPost._embedded.author[0].name,
+            slug: rawPost._embedded.author[0].slug,
+          }
+        : undefined,
+  };
+  return buildPostJsonLd(post, canonicalUrl);
+}
+
+export { buildBreadcrumbsJsonLd, buildPostJsonLd, buildWebsiteJsonLd };

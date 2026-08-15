@@ -5,23 +5,24 @@
 import PostCard from '../components/PostCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE } from '../config/site';
-import { buildMetadata } from '../lib/seo/metadata';
-import { getAllPosts } from '../lib/wordpress';
-
+import { buildWebsiteJsonLd, getAllPosts, getSeoData } from '../lib/wordpress';
 
 const posts = await getAllPosts();
 const recentPosts = posts.slice(0, SITE.homePostLimit);
 
-const metadata = buildMetadata({
+const metadata = getSeoData({
   title: SITE.name,
   description: SITE.description,
   path: '/',
 });
+
+const jsonLd = buildWebsiteJsonLd();
 ---
 
-<BaseLayout metadata={metadata}>
+<BaseLayout metadata={metadata} jsonLd={jsonLd}>
   <h1>{SITE.name}</h1>
   <ul class="card-grid">
     {recentPosts.map((post) => <PostCard post={post} />)}
   </ul>
 </BaseLayout>
+

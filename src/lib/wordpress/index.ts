@@ -17,8 +17,15 @@ export { getAllCategories, getAllCategories as getCategories } from './categorie
 export { getMediaById, getMediaById as getMedia } from './media';
 
 
-export { buildPostJsonLd, getSeoData } from './seo';
-export type { Metadata } from './seo';
+export {
+  buildBreadcrumbsJsonLd,
+  buildPostJsonLd,
+  buildWebsiteJsonLd,
+  getJsonLdGraph,
+  getSeoData,
+} from './seo';
+export type { BreadcrumbItem, Metadata, SeoInput, WordPressSeoOptions } from './seo';
+
 
 export type { Category, FeaturedImage, Media, Page, Post, PostAuthor } from './normalizers';
 export { WordPressContractError } from './normalizers';

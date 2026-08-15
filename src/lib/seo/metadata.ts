@@ -112,3 +112,35 @@ export function buildPostJsonLd(post: Post, canonicalUrl: string): Record<string
 
   return jsonLd;
 }
+
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+/** Builds a Schema.org BreadcrumbList structured data object. */
+export function buildBreadcrumbsJsonLd(items: BreadcrumbItem[]): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+/** Builds a Schema.org WebSite structured data object for the site. */
+export function buildWebsiteJsonLd(): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE.name,
+    url: env.siteUrl.toString(),
+    description: SITE.description,
+  };
+}
+
+
