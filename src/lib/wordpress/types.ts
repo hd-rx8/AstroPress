@@ -40,10 +40,24 @@ interface WordPressRawRenderedField {
   rendered: string;
 }
 
+export interface WordPressRawMediaDetails {
+  width?: number;
+  height?: number;
+}
+
 export interface WordPressRawFeaturedMedia {
   source_url: string;
   alt_text?: string;
+  media_details?: WordPressRawMediaDetails;
 }
+
+export interface WordPressRawMedia {
+  id: number;
+  source_url: string;
+  alt_text?: string;
+  media_details?: WordPressRawMediaDetails;
+}
+
 
 export interface WordPressRawAuthor {
   name: string;

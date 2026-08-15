@@ -24,9 +24,18 @@ const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
   {
     post.featuredImage && (
       <a href={href} tabindex="-1" aria-hidden="true">
-        <img class="card__image" src={post.featuredImage.url} alt={post.featuredImage.alt} loading="lazy" />
+        <img
+          class="card__image"
+          src={post.featuredImage.url}
+          alt={post.featuredImage.alt}
+          width={post.featuredImage.width}
+          height={post.featuredImage.height}
+          loading="lazy"
+          decoding="async"
+        />
       </a>
     )
+
   }
   <div class="card__body">
     <h2 class="card__title"><a href={href}>{post.title}</a></h2>

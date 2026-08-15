@@ -13,6 +13,7 @@ import type {
   WordPressRawAuthor,
   WordPressRawCategory,
   WordPressRawFeaturedMedia,
+  WordPressRawMedia,
   WordPressRawPage,
   WordPressRawPost,
 } from './types';
@@ -25,7 +26,18 @@ export interface PostAuthor {
 export interface FeaturedImage {
   url: string;
   alt: string;
+  width?: number;
+  height?: number;
 }
+
+export interface Media {
+  id: number;
+  url: string;
+  alt: string;
+  width?: number;
+  height?: number;
+}
+
 
 export interface Post {
   id: number;
@@ -131,11 +143,16 @@ function normalizeFeaturedImage(media: WordPressRawFeaturedMedia[] | undefined):
   if (url === undefined) {
     return undefined;
   }
+  const width = first?.media_details?.width;
+  const height = first?.media_details?.height;
   return {
     url,
     alt: readEmbeddedString(first?.alt_text) ?? '',
+    ...(typeof width === 'number' ? { width } : {}),
+    ...(typeof height === 'number' ? { height } : {}),
   };
 }
+
 
 /** Returns `undefined` for an absent, empty, or error-stub author embed. */
 function normalizeAuthor(authors: WordPressRawAuthor[] | undefined): PostAuthor | undefined {
@@ -210,4 +227,20 @@ export function normalizeCategory(raw: WordPressRawCategory): Category {
   const count = requireField(raw.count, 'category', 'count');
   return { id, slug, name, count };
 }
+
+/** Converts a raw WordPress REST media (attachment) record into a clean {@link Media}. */
+export function normalizeMedia(raw: WordPressRawMedia): Media {
+  const id = requireField(raw.id, 'media', 'id');
+  const url = requireField(raw.source_url, 'media', 'source_url');
+  const width = raw.media_details?.width;
+  const height = raw.media_details?.height;
+  return {
+    id,
+    url,
+    alt: readEmbeddedString(raw.alt_text) ?? '',
+    ...(typeof width === 'number' ? { width } : {}),
+    ...(typeof height === 'number' ? { height } : {}),
+  };
+}
+
 

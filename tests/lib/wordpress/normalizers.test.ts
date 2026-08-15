@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeCategory, normalizePage, normalizePost } from '../../../src/lib/wordpress/normalizers';
+import { normalizeCategory, normalizeMedia, normalizePage, normalizePost } from '../../../src/lib/wordpress/normalizers';
 import {
   pageWithoutExcerpt,
   postWithEmptyEmbeds,
@@ -94,7 +94,30 @@ describe('normalizePost', () => {
       excerpt: 'Rock & roll – the sequel…',
     });
   });
+
+  it('includes featured image width and height when the embed reports them', () => {
+    const withDimensions = {
+      ...wordpressPostFixture,
+      _embedded: {
+        ...wordpressPostFixture._embedded,
+        'wp:featuredmedia': [
+          {
+            source_url: 'https://cms.example.com/uploads/hero.jpg',
+            alt_text: 'Hero image',
+            media_details: { width: 1600, height: 900 },
+          },
+        ],
+      },
+    };
+    expect(normalizePost(withDimensions).featuredImage).toEqual({
+      url: 'https://cms.example.com/uploads/hero.jpg',
+      alt: 'Hero image',
+      width: 1600,
+      height: 900,
+    });
+  });
 });
+
 
 describe('normalizePage', () => {
   it('normalizes a page with an excerpt', () => {
@@ -134,4 +157,31 @@ describe('normalizeCategory', () => {
     expect(() => normalizeCategory(invalid)).toThrow(/slug/i);
   });
 });
+
+describe('normalizeMedia', () => {
+  it('normalizes a media record with known dimensions', () => {
+    expect(
+      normalizeMedia({
+        id: 55,
+        source_url: 'https://cms.example.com/uploads/banner.jpg',
+        alt_text: 'Banner',
+        media_details: { width: 1200, height: 630 },
+      }),
+    ).toEqual({
+      id: 55,
+      url: 'https://cms.example.com/uploads/banner.jpg',
+      alt: 'Banner',
+      width: 1200,
+      height: 630,
+    });
+  });
+
+  it('omits width and height when media_details is absent', () => {
+    const media = normalizeMedia({ id: 56, source_url: 'https://cms.example.com/uploads/plain.jpg' });
+    expect(media).not.toHaveProperty('width');
+    expect(media).not.toHaveProperty('height');
+    expect(media.alt).toBe('');
+  });
+});
+
 
