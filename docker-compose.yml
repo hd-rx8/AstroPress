@@ -7,13 +7,15 @@ services:
       MYSQL_USER: wordpress
       MYSQL_PASSWORD: wordpress
       MYSQL_ROOT_PASSWORD: wordpress
-    ports:
-      - "127.0.0.1:3306:3306"
+    # No host port is published: only the `wordpress` service talks to MySQL,
+    # over the Compose network. Publishing 3306 would collide with a locally
+    # installed MySQL for no benefit — the starter only ever speaks HTTP to
+    # WordPress and never connects to the database directly.
     volumes:
       - mysql_data:/var/lib/mysql
 
   wordpress:
-    image: wordpress:latest
+    image: wordpress:6
     restart: unless-stopped
     depends_on:
       - mysql

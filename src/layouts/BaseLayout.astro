@@ -11,9 +11,11 @@ import type { Metadata } from '../lib/seo/metadata';
 export interface Props {
   metadata: Metadata;
   jsonLd?: Record<string, unknown>;
+  /** Open Graph object type. Post detail pages pass `'article'`; listings stay `'website'`. */
+  ogType?: 'website' | 'article';
 }
 
-const { metadata, jsonLd } = Astro.props;
+const { metadata, jsonLd, ogType = 'website' } = Astro.props;
 
 /**
  * Escapes `<` so a `</script>` substring inside serialized JSON-LD data
@@ -42,7 +44,7 @@ const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : 
     <meta name="description" content={metadata.description} />
     <link rel="canonical" href={metadata.canonical} />
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:title" content={metadata.openGraph.title} />
     <meta property="og:description" content={metadata.openGraph.description} />
     <meta property="og:url" content={metadata.openGraph.url} />
@@ -50,7 +52,7 @@ const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : 
 
     <meta name="twitter:card" content={metadata.twitter.card} />
 
-    {jsonLdScript && <script type="application/ld+json" set:html={jsonLdScript} />}
+    {jsonLdScript && <script type="application/ld+json" is:inline set:html={jsonLdScript} />}
   </head>
   <body>
     <header class="site-header">

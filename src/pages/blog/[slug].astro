@@ -42,7 +42,7 @@ const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
 });
 ---
 
-<BaseLayout metadata={metadata} jsonLd={jsonLd}>
+<BaseLayout metadata={metadata} jsonLd={jsonLd} ogType="article">
   <article>
     <header class="page-header">
       <h1 class="page-header__title">{post.title}</h1>

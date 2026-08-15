@@ -56,49 +56,56 @@ export function createWordPressClient(options: CreateWordPressClientOptions = {}
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-      let response: Response;
+      // The timer stays armed until the body has been fully read, not just
+      // until headers arrive: a server that responds promptly and then stalls
+      // mid-body would otherwise hang the build forever. Aborting the signal
+      // rejects an in-flight `response.json()` too, so both phases are covered
+      // by the same deadline.
       try {
-        response = await fetchFn(url, { signal: controller.signal });
-      } catch (cause) {
-        throw new WordPressRequestError({
-          operation: path,
-          url: url.toString(),
-          cause,
-        });
+        let response: Response;
+        try {
+          response = await fetchFn(url, { signal: controller.signal });
+        } catch (cause) {
+          throw new WordPressRequestError({
+            operation: path,
+            url: url.toString(),
+            cause,
+          });
+        }
+
+        if (!response.ok) {
+          throw new WordPressRequestError({
+            operation: path,
+            url: url.toString(),
+            status: `${response.status} ${response.statusText}`,
+          });
+        }
+
+        let data: T;
+        try {
+          data = (await response.json()) as T;
+        } catch (cause) {
+          throw new WordPressRequestError({
+            operation: path,
+            url: url.toString(),
+            cause,
+          });
+        }
+
+        const total = parsePaginationHeader(response.headers.get('X-WP-Total'));
+        const totalPages = parsePaginationHeader(response.headers.get('X-WP-TotalPages'));
+
+        const result: WordPressGetResult<T> = { data };
+        if (total !== undefined) {
+          result.total = total;
+        }
+        if (totalPages !== undefined) {
+          result.totalPages = totalPages;
+        }
+        return result;
       } finally {
         clearTimeout(timer);
       }
-
-      if (!response.ok) {
-        throw new WordPressRequestError({
-          operation: path,
-          url: url.toString(),
-          status: `${response.status} ${response.statusText}`,
-        });
-      }
-
-      let data: T;
-      try {
-        data = (await response.json()) as T;
-      } catch (cause) {
-        throw new WordPressRequestError({
-          operation: path,
-          url: url.toString(),
-          cause,
-        });
-      }
-
-      const total = parsePaginationHeader(response.headers.get('X-WP-Total'));
-      const totalPages = parsePaginationHeader(response.headers.get('X-WP-TotalPages'));
-
-      const result: WordPressGetResult<T> = { data };
-      if (total !== undefined) {
-        result.total = total;
-      }
-      if (totalPages !== undefined) {
-        result.totalPages = totalPages;
-      }
-      return result;
     },
   };
 }
