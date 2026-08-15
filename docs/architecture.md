@@ -56,11 +56,11 @@ Static HTML / Islands         dist/
   that same cached collection.
 - `media.ts` — the one non-aggregated lookup: `getMediaById(id)` fetches a
   single attachment record on demand.
-- `seo.ts` — `getSeoData(...)`, the stable public name for building page
-  metadata (title, description, canonical, robots, Open Graph, Twitter).
-  It wraps `src/lib/seo/metadata.ts` today; a later milestone can make it
-  prefer Yoast/Rank Math fields when present without changing its
-  signature or any call site.
+- `seo.ts` — `getSeoData(...)`, the public entry point for building page
+  metadata (title, description, canonical, robots, Open Graph, Twitter) with
+  a 4-tier cascade (Yoast SEO > Rank Math > Native WordPress fields > Site Defaults).
+  Also exposes `getJsonLdGraph(...)` for Schema.org JSON-LD ingestion (Yoast/RankMath
+  graph with fallbacks to `buildPostJsonLd`, `buildBreadcrumbsJsonLd`, `buildWebsiteJsonLd`).
 - `errors.ts` — `WordPressRequestError` (transport failures: network,
   timeout, non-2xx, malformed JSON), `WordPressPaginationError` (a
   collection's page 1 didn't report a usable `X-WP-TotalPages`), and
@@ -68,7 +68,8 @@ Static HTML / Islands         dist/
   three distinct, greppable failure modes instead of one generic error.
 - `index.ts` — the one import surface Astro code should use:
   `getPosts`, `getPostBySlug`, `getPages`, `getPageBySlug`, `getCategories`,
-  `getMedia`, `getSeoData`, plus every domain type.
+  `getMedia`, `getSeoData`, `getJsonLdGraph`, `buildBreadcrumbsJsonLd`, `buildWebsiteJsonLd`, plus every domain type.
+
 
 ### Astro's responsibility
 
@@ -128,3 +129,20 @@ rebuild in this milestone.
   piece — e.g. a search box or a comment widget — never applied to the
   editorial content tree itself. No such island exists yet in this
   codebase; this section documents the boundary for when one is needed.
+
+## SEO Cascade & Image Pipeline (Milestone 3)
+
+### SEO Ingestion Hierarchy
+Metadata extraction in `src/lib/wordpress/seo.ts` executes a 4-tier cascade:
+1. **Yoast SEO (`yoast_head_json`)**: reads custom titles, descriptions, canonicals, robots, Open Graph, Twitter cards, and JSON-LD schema graphs.
+2. **Rank Math SEO (`rank_math_seo`)**: reads titles, descriptions, canonicals, robots arrays, Open Graph, and schema graphs.
+3. **Native WordPress REST Fields**: decodes `title.rendered`, strips HTML from `excerpt.rendered`, and resolves featured media attachments.
+4. **Site Defaults (`SITE.name`, `SITE.description`)**: ensures all pages have complete, valid metadata.
+
+All HTML entities (named, decimal, hex) are decoded into clean strings.
+
+### Image Optimization Pipeline
+- `astro.config.ts` dynamically configures `image.remotePatterns` derived from `WORDPRESS_URL`.
+- Listing cards (`PostCard.astro`) and post headers (`blog/[slug].astro`) render remote images via Astro's `<Image />` component from `astro:assets`.
+- Generates responsive WebP/AVIF variants at build time with modern `srcset` / `sizes` attributes and zero client-side JavaScript.
+

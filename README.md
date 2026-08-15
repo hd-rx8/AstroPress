@@ -148,17 +148,25 @@ Normalizers extract only the fields the frontend needs (identity, slug, title, e
 
 This starter renders content **once, at build time**. If you publish, edit, or delete something in WordPress, the live static site does not change until you rebuild and redeploy Astro. There is no webhook, polling, or incremental revalidation in V1 — a rebuild is the only way to reflect new WordPress content. Automated rebuild triggers (e.g. a WordPress webhook calling your CI) are a roadmap idea, not something this starter provides.
 
-## SEO
+## SEO & Structured Data
 
-A central metadata module derives, per post/page:
+A central SEO module (`getSeoData`) derives metadata and structured data via an automatic 4-tier cascade:
 
-- document title from the WordPress title;
-- description from the normalized, HTML-free excerpt, falling back to the site description when the excerpt is empty;
-- a canonical URL from `SITE_URL` and the route;
-- Open Graph and Twitter fields from title, description, canonical URL, and featured image (when available);
-- `BlogPosting` JSON-LD for posts, built only from known post data.
+1. **Yoast SEO (`yoast_head_json`)** — uses Yoast custom titles, descriptions, canonicals, robots, and OpenGraph/Twitter tags if active.
+2. **Rank Math SEO (`rank_math_seo`)** — uses Rank Math titles, descriptions, canonicals, robots, and social tags if active.
+3. **Native WordPress REST fields** — decodes `title.rendered`, extracts plain text from `excerpt.rendered`, and resolves featured media attachments.
+4. **Site defaults** — falls back to `SITE.name` and `SITE.description` from `src/config/site.ts`.
 
-Missing optional data (no featured image, no author, no excerpt) is omitted rather than faked — the starter never fabricates Schema.org values just to fill out an object. Pages share the same metadata base but don't emit a mandatory schema type in V1. A sitemap is generated via Astro's sitemap integration from `SITE_URL`, and `robots.txt` permits indexing and references the generated sitemap.
+JSON-LD Schema graphs from Yoast or Rank Math are ingested directly. When absent, native generators emit standard Schema.org `BlogPosting`, `BreadcrumbList`, and `WebSite` structured data. A sitemap is generated automatically via Astro's `@astrojs/sitemap` integration from `SITE_URL`, and `robots.txt` permits indexing.
+
+## Image Optimization
+
+Remote WordPress images are processed at build time using Astro's `<Image />` component (`astro:assets`):
+
+- Dynamic `remotePatterns` in `astro.config.ts` authorize remote WordPress uploads from `WORDPRESS_URL`.
+- Responsive `widths` and `sizes` generate optimized modern WebP/AVIF formats at build time with zero client runtime overhead.
+- Featured images on detail pages use `loading="eager"` and `fetchpriority="high"` for superior LCP (Largest Contentful Paint).
+
 
 ## Trusted HTML and page-builder fidelity
 
