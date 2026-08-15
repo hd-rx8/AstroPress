@@ -141,6 +141,21 @@ Individual post routes do **not** re-fetch a single post by slug at build time â
 
 `/blog/` is the single canonical route for page one of posts; numbered pagination starts at `/blog/page/2/`. If a WordPress page slug collides with a route the framework owns (`blog`, or the generated `robots.txt`), the build fails and names the conflicting slug rather than silently producing an ambiguous route.
 
+## Performance Budgets & Static Assets Auditor
+
+Strict declarative performance budgets (`budget.json`) are enforced across the static build output (`dist/`):
+
+```bash
+npm run audit:perf   # Inspect route payloads and assert against budgets
+```
+
+- **Zero Editorial JS:** 0 KB of client JavaScript on all content routes (`/`, `/blog/`, `/blog/:slug/`, `/:slug/`).
+- **Global CSS Budget:** Total CSS payload `<= 25 KB` uncompressed (`<= 7 KB` gzipped).
+- **HTML Document Budget:** Emitted HTML pages `<= 50 KB` per route.
+- **CLS Prevention:** Asserts that all `<img>` tags declare explicit `width` and `height` dimensions and accessible `alt` text.
+
+Integrated directly into `npm run build:ci` to prevent performance regressions in CI pipelines.
+
 ## Headless Doctor (Automated Diagnostics)
 
 Run a complete automated health audit on your decoupled WordPress and Astro environment:
@@ -152,7 +167,7 @@ npm run doctor -- --json # Emits raw JSON report for CI/tooling
 ```
 
 Audits:
-- **Environment & Configuration:** validates `.env`, domain formats, and secrets.
+- **Environment & Configuration:** validates `.env`, domain formats, and secrets (with automatic recognition of local Docker setups).
 - **Connectivity:** checks WordPress server ping, network latency, and `/wp-json/` index.
 - **REST Endpoints:** verifies `/posts`, `/pages`, `/categories`, and `/media`.
 - **AstroPress Connector Plugin:** checks plugin version, pretty permalinks (`/%postname%/`), and redirect status.
@@ -212,7 +227,8 @@ The starter includes an optional, lightweight WordPress plugin located in [`word
 npm test          # unit + integration tests (Vitest)
 npm run typecheck # astro check
 npm run lint      # eslint
-npm run build:ci  # build smoke test against a local fixture WordPress server
+npm run build:ci  # build smoke test + performance budget assertions
+npm run audit:perf # standalone performance budget report
 ```
 
 `npm run build:ci` never touches a public WordPress instance â€” it starts an in-memory fixture REST server for the duration of the build only, so it works offline and in CI.

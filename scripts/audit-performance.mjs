@@ -19,7 +19,6 @@ const distDir = path.join(projectRoot, 'dist');
 
 const args = process.argv.slice(2);
 const isJson = args.includes('--json');
-const isCi = args.includes('--ci');
 
 // Import performance auditor
 const { auditDistDirectory, DEFAULT_BUDGET_CONFIG } = await import(
@@ -57,7 +56,6 @@ const reset = '\x1b[0m';
 const bold = '\x1b[1m';
 const dim = '\x1b[2m';
 const green = '\x1b[32m';
-const yellow = '\x1b[33m';
 const red = '\x1b[31m';
 const cyan = '\x1b[36m';
 
@@ -81,22 +79,19 @@ for (const r of report.routes) {
   const routeName = (r.route.length > 28 ? r.route.slice(0, 26) + '..' : r.route).padEnd(30);
   const htmlSize = `${(r.htmlSizeBytes / 1024).toFixed(1)}k / ${(r.htmlGzipBytes / 1024).toFixed(1)}k`.padEnd(18);
 
-  let jsText = '';
-  if (r.isEditorial) {
-    jsText = r.scriptsCount === 0 ? `${green}0 KB (0 JS) ✓${reset}` : `${red}${r.scriptsCount} scripts ✖${reset}`;
-  } else {
-    jsText = `${(r.scriptBytes / 1024).toFixed(1)}k (Interativo)`;
-  }
+  const jsText = r.isEditorial
+    ? r.scriptsCount === 0
+      ? `${green}0 KB (0 JS) ✓${reset}`
+      : `${red}${r.scriptsCount} scripts ✖${reset}`
+    : `${(r.scriptBytes / 1024).toFixed(1)}k (Interativo)`;
   const jsCol = jsText.padEnd(r.isEditorial ? 25 : 16);
 
-  let imgText = '';
-  if (r.imagesCount === 0) {
-    imgText = `${dim}Sem imagens${reset}`;
-  } else if (r.missingDimensionsCount === 0) {
-    imgText = `${green}${r.imagesCount} img (0 CLS) ✓${reset}`;
-  } else {
-    imgText = `${red}${r.missingDimensionsCount} sem dim ✖${reset}`;
-  }
+  const imgText =
+    r.imagesCount === 0
+      ? `${dim}Sem imagens${reset}`
+      : r.missingDimensionsCount === 0
+        ? `${green}${r.imagesCount} img (0 CLS) ✓${reset}`
+        : `${red}${r.missingDimensionsCount} sem dim ✖${reset}`;
   const imgCol = imgText.padEnd(25);
 
   const status = r.passed ? `${green}${bold}PASS ✓${reset}` : `${red}${bold}FAIL ✖${reset}`;

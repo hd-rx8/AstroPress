@@ -165,3 +165,16 @@ Located in `wordpress/plugins/astropress-connector/`:
 - **Automated Diagnostic Engine:** `src/lib/doctor/` executes 7 diagnostic check categories (Environment, Connectivity, REST Endpoints, AstroPress Connector, SEO Ingestion, Draft Preview, and Remote Images).
 - **CLI Runner:** `npm run doctor` outputs ANSI color-coded reports with checkmarks, latency metrics, actionable solutions, and `--ci` / `--json` support.
 - **Web Dashboard:** `/doctor` route provides an interactive visual dashboard for health monitoring.
+
+## Performance Budgets & Static Assets Auditor (Milestone 7)
+
+- **Strict Declarative Budgets (`budget.json`):**
+  - Editorial routes (`/`, `/blog/`, `/blog/:slug/`, `/:slug/`): **0 KB client JavaScript**.
+  - Total global CSS: **<= 25 KB** uncompressed.
+  - HTML document size: **<= 50 KB** per route.
+  - Image CLS prevention: all `<img>` tags must declare explicit `width`, `height`, and `alt`.
+- **Static Assets Auditor (`src/lib/performance/`):**
+  - Analyzes the compiled `dist/` directory, measures raw and gzipped sizes, parses HTML AST for script tags and image dimensions.
+- **CLI & CI Guard:**
+  - `npm run audit:perf` outputs color-coded route-by-route payload tables.
+  - Integrated into `npm run build:ci` to automatically fail builds that violate performance limits.
