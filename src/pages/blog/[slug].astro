@@ -8,8 +8,8 @@ import { Image } from 'astro:assets';
 import PostContent from '../../components/PostContent.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { postPath } from '../../lib/routes';
-import { getAllPosts, getJsonLdGraph, getSeoData } from '../../lib/wordpress';
 import type { Post } from '../../lib/wordpress';
+import { getAllPosts, getJsonLdGraph, getSeoData } from '../../lib/wordpress';
 
 export async function getStaticPaths() {
   const posts = await getAllPosts();
@@ -30,12 +30,12 @@ const metadata = getSeoData({
   title: post.title,
   description: post.excerpt,
   path: postPath(post.slug),
-  imageUrl: post.featuredImage?.url,
+  imageUrl: post.featuredImage?.url || '/images/rocket-cover.jpg',
 });
 
 const jsonLd = getJsonLdGraph(post, metadata.canonical);
 
-const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
+const formattedDate = new Date(post.date).toLocaleDateString('pt-BR', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -43,38 +43,51 @@ const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
 ---
 
 <BaseLayout metadata={metadata} jsonLd={jsonLd} ogType="article">
-  <article>
+  <article class="prose">
     <header class="page-header">
+      <div class="featured-card__badges" style="margin-bottom: 0.75rem;">
+        {post.categories && post.categories.length > 0 ? (
+          post.categories.map((cat, idx) => (
+            <span class={`badge ${idx % 2 === 0 ? 'badge--amber' : 'badge--purple'}`}>
+              {cat.name}
+            </span>
+          ))
+        ) : (
+          <span class="badge badge--amber">Artigo</span>
+        )}
+      </div>
+
       <h1 class="page-header__title">{post.title}</h1>
       <p class="page-header__meta">
         <time datetime={post.date}>{formattedDate}</time>
-        {post.author && <> · {post.author.name}</>}
+        {post.author && <> · Por <strong>{post.author.name}</strong></>}
       </p>
-      {
-        post.featuredImage && (
-          <div class="page-header__image">
-            {post.featuredImage.width && post.featuredImage.height ? (
-              <Image
-                src={post.featuredImage.url}
-                alt={post.featuredImage.alt}
-                width={post.featuredImage.width}
-                height={post.featuredImage.height}
-                widths={[480, 800, 1200]}
-                sizes="(max-width: 800px) 100vw, 800px"
-                loading="eager"
-                decoding="async"
-              />
-            ) : (
-              <img
-                src={post.featuredImage.url}
-                alt={post.featuredImage.alt}
-                loading="eager"
-                decoding="async"
-              />
-            )}
-          </div>
-        )
-      }
+
+      <div class="page-header__image">
+        {
+          post.featuredImage?.width && post.featuredImage?.height ? (
+            <Image
+              src={post.featuredImage.url}
+              alt={post.featuredImage.alt}
+              width={post.featuredImage.width}
+              height={post.featuredImage.height}
+              widths={[480, 800, 1200]}
+              sizes="(max-width: 800px) 100vw, 800px"
+              loading="eager"
+              decoding="async"
+            />
+          ) : (
+            <img
+              src="/images/rocket-cover.jpg"
+              alt="Ilustração moderna de foguete em lançamento"
+              width="1200"
+              height="675"
+              loading="eager"
+              decoding="async"
+            />
+          )
+        }
+      </div>
     </header>
     <PostContent html={post.content} />
   </article>

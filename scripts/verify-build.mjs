@@ -29,7 +29,7 @@ const SITE_URL = 'https://starter.test';
 const EXPECTED_FILES = [
   'index.html',
   path.join('blog', 'index.html'),
-  path.join('blog', 'hello-world', 'index.html'),
+  path.join('blog', 'o-que-e-astropress-headless', 'index.html'),
   path.join('about', 'index.html'),
   path.join('preview', 'index.html'),
   path.join('doctor', 'index.html'),
@@ -55,7 +55,7 @@ function verifyBuildOutput(distDir) {
 
   // 1. JSON-LD is present, interpolated, and valid JSON — not the literal
   //    template expression, and not an empty tag.
-  const postHtml = read(path.join('blog', 'hello-world', 'index.html'));
+  const postHtml = read(path.join('blog', 'o-que-e-astropress-headless', 'index.html'));
   const jsonLdMatch = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(postHtml);
   if (jsonLdMatch === null) {
     throw new Error('Build output assertion failed: post page has no application/ld+json script tag');
