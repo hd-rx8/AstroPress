@@ -174,7 +174,17 @@ WordPress's `content.rendered` is rendered with Astro's `set:html`. **This means
 
 Gutenberg-authored content works naturally, to the degree it's returned by the REST API. **Elementor and other page-builder markup is preserved as-is, but visual fidelity is not promised**: page builders typically depend on their own frontend CSS, JavaScript, and asset pipelines that are not automatically carried into the Astro frontend. There is no custom Gutenberg renderer, no Elementor support layer, and no page-builder asset pipeline. The bundled content styles provide restrained, readable defaults for common semantic HTML — they are not an emulation of any WordPress theme or page builder.
 
+## WordPress Connector Plugin
+
+The starter includes an optional, lightweight WordPress plugin located in [`wordpress/plugins/astropress-connector`](wordpress/plugins/astropress-connector/README.md):
+
+- **Automatic Frontend Redirects:** Routes visitors accessing the WordPress domain directly to your Astro site.
+- **Admin Link Rewriting:** "View Post", "View Page", and "Visit Site" in `wp-admin` open your Astro frontend.
+- **Deploy Hooks & Debouncing:** Dispatches rebuild webhooks to Vercel/Netlify upon publishing/updating content, with a 30s debounce and a manual "🚀 Rebuild Site" button in the admin bar.
+- **Health Check REST API:** `GET /wp-json/astropress/v1/health` for automated diagnostics.
+
 ## Tests, CI, and static deployment
+
 
 ```bash
 npm test          # unit + integration tests (Vitest)

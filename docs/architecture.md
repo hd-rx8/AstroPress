@@ -146,3 +146,12 @@ All HTML entities (named, decimal, hex) are decoded into clean strings.
 - Listing cards (`PostCard.astro`) and post headers (`blog/[slug].astro`) render remote images via Astro's `<Image />` component from `astro:assets`.
 - Generates responsive WebP/AVIF variants at build time with modern `srcset` / `sizes` attributes and zero client-side JavaScript.
 
+## WordPress Connector Plugin (Milestone 4)
+
+Located in `wordpress/plugins/astropress-connector/`:
+- **Template Redirection:** Automatically routes public hits on the WordPress domain to the Astro frontend (`/`, `/blog/:slug/`, `/:slug/`), while protecting `/wp-admin`, `/wp-login.php`, `/wp-json/*`, and `/wp-cron.php`.
+- **Admin Link Rewriting:** Rewrites "View Post", "View Page", and Admin Bar "Visit Site" links to point directly to the Astro frontend URL.
+- **Deploy Webhook Dispatcher:** Automatically dispatches non-blocking POST requests to Vercel/Netlify/GitHub Actions on post/page lifecycle transitions with a 30s debounce. Adds a manual "🚀 Rebuild Site" button in the admin bar.
+- **Health REST Endpoint:** Exposes `GET /wp-json/astropress/v1/health` providing automated diagnostics on permalinks, active SEO plugins, frontend URL status, and core REST endpoints.
+
+
