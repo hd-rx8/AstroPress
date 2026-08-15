@@ -4,6 +4,7 @@
  * already-normalized `getAllPosts()` collection via `getStaticPaths` —
  * no per-slug fetch happens here.
  */
+import { Image } from 'astro:assets';
 import PostContent from '../../components/PostContent.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { postPath } from '../../lib/routes';
@@ -34,7 +35,6 @@ const metadata = getSeoData({
 
 const jsonLd = getJsonLdGraph(post, metadata.canonical);
 
-
 const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'long',
@@ -50,6 +50,31 @@ const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
         <time datetime={post.date}>{formattedDate}</time>
         {post.author && <> · {post.author.name}</>}
       </p>
+      {
+        post.featuredImage && (
+          <div class="page-header__image">
+            {post.featuredImage.width && post.featuredImage.height ? (
+              <Image
+                src={post.featuredImage.url}
+                alt={post.featuredImage.alt}
+                width={post.featuredImage.width}
+                height={post.featuredImage.height}
+                widths={[480, 800, 1200]}
+                sizes="(max-width: 800px) 100vw, 800px"
+                loading="eager"
+                decoding="async"
+              />
+            ) : (
+              <img
+                src={post.featuredImage.url}
+                alt={post.featuredImage.alt}
+                loading="eager"
+                decoding="async"
+              />
+            )}
+          </div>
+        )
+      }
     </header>
     <PostContent html={post.content} />
   </article>

@@ -4,6 +4,7 @@
  * paginated blog pages). Featured image, excerpt, and author are each
  * rendered only when present on the normalized `Post`.
  */
+import { Image } from 'astro:assets';
 import { postPath } from '../lib/routes';
 import type { Post } from '../lib/wordpress/normalizers';
 
@@ -24,19 +25,31 @@ const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
   {
     post.featuredImage && (
       <a href={href} tabindex="-1" aria-hidden="true">
-        <img
-          class="card__image"
-          src={post.featuredImage.url}
-          alt={post.featuredImage.alt}
-          width={post.featuredImage.width}
-          height={post.featuredImage.height}
-          loading="lazy"
-          decoding="async"
-        />
+        {post.featuredImage.width && post.featuredImage.height ? (
+          <Image
+            class="card__image"
+            src={post.featuredImage.url}
+            alt={post.featuredImage.alt}
+            width={post.featuredImage.width}
+            height={post.featuredImage.height}
+            widths={[360, 540, 720, 1080]}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <img
+            class="card__image"
+            src={post.featuredImage.url}
+            alt={post.featuredImage.alt}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
       </a>
     )
-
   }
+
   <div class="card__body">
     <h2 class="card__title"><a href={href}>{post.title}</a></h2>
     <p class="card__meta">

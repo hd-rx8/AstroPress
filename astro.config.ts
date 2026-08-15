@@ -63,8 +63,39 @@ function resolveSiteUrl(): string {
   }).siteUrl.href;
 }
 
+function resolveRemoteImagePatterns(): Array<{ protocol?: 'http' | 'https'; hostname: string; port?: string }> {
+  const fileEnv = loadDotEnvFiles(process.env.NODE_ENV ?? 'production', process.cwd(), '');
+  const rawWpUrl = pickEnvValue('WORDPRESS_URL', process.env, fileEnv);
+
+  const patterns: Array<{ protocol?: 'http' | 'https'; hostname: string; port?: string }> = [
+    {
+      protocol: 'https',
+      hostname: 'cms.example.com',
+    },
+  ];
+
+  if (rawWpUrl) {
+    try {
+      const url = new URL(rawWpUrl);
+      patterns.push({
+        protocol: url.protocol.replace(':', '') as 'http' | 'https',
+        hostname: url.hostname,
+        port: url.port ? url.port : undefined,
+      });
+    } catch {
+      // Ignored here; validated strictly during loadEnv
+    }
+  }
+
+  return patterns;
+}
+
 // https://astro.build/config
 export default defineConfig({
   site: resolveSiteUrl(),
   integrations: [sitemap()],
+  image: {
+    remotePatterns: resolveRemoteImagePatterns(),
+  },
 });
+
