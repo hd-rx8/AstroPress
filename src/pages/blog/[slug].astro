@@ -8,8 +8,9 @@ import PostContent from '../../components/PostContent.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { postPath } from '../../lib/routes';
 import { buildMetadata, buildPostJsonLd } from '../../lib/seo/metadata';
-import { getAllPosts } from '../../lib/wordpress/posts';
-import type { Post } from '../../lib/wordpress/normalizers';
+import { getAllPosts } from '../../lib/wordpress';
+import type { Post } from '../../lib/wordpress';
+
 
 export async function getStaticPaths() {
   const posts = await getAllPosts();

@@ -77,3 +77,10 @@ export function getAllPages(): Promise<Page[]> {
   }
   return cache;
 }
+
+/** Looks up one page by slug within the already-fetched, cached collection. Never issues a per-slug fetch. */
+export async function getPageBySlug(slug: string): Promise<Page | undefined> {
+  const all = await getAllPages();
+  return all.find((page) => page.slug === slug);
+}
+

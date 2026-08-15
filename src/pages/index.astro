@@ -6,7 +6,8 @@ import PostCard from '../components/PostCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE } from '../config/site';
 import { buildMetadata } from '../lib/seo/metadata';
-import { getAllPosts } from '../lib/wordpress/posts';
+import { getAllPosts } from '../lib/wordpress';
+
 
 const posts = await getAllPosts();
 const recentPosts = posts.slice(0, SITE.homePostLimit);

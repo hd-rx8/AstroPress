@@ -90,6 +90,31 @@ describe('assertNoReservedPageSlugs', () => {
   });
 });
 
+describe('getPageBySlug', () => {
+  beforeEach(() => {
+    clientGetMock.mockReset();
+    vi.resetModules();
+  });
+
+  it('finds a page by slug within the cached collection', async () => {
+    clientGetMock.mockResolvedValueOnce({ data: [wordpressPageFixture], totalPages: 1 });
+
+    const { getPageBySlug } = await importPagesModule();
+    const page = await getPageBySlug('about');
+
+    expect(page?.slug).toBe('about');
+  });
+
+  it('returns undefined for an unknown slug', async () => {
+    clientGetMock.mockResolvedValueOnce({ data: [wordpressPageFixture], totalPages: 1 });
+
+    const { getPageBySlug } = await importPagesModule();
+    await expect(getPageBySlug('missing')).resolves.toBeUndefined();
+  });
+});
+
+
 function importPagesModule() {
   return import('../../../src/lib/wordpress/pages');
 }
+

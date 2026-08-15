@@ -7,10 +7,9 @@ import Pagination from '../../components/Pagination.astro';
 import PostCard from '../../components/PostCard.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { buildMetadata } from '../../lib/seo/metadata';
-import { BLOG_PAGE_SIZE, getAllPosts, paginatePosts } from '../../lib/wordpress/posts';
+import { BLOG_PAGE_SIZE, getPosts } from '../../lib/wordpress';
 
-const posts = await getAllPosts();
-const { items, page, totalPages } = paginatePosts(posts, 1, BLOG_PAGE_SIZE);
+const { posts, pagination } = await getPosts({ page: 1, perPage: BLOG_PAGE_SIZE });
 
 const metadata = buildMetadata({
   title: 'Blog',
@@ -21,7 +20,8 @@ const metadata = buildMetadata({
 <BaseLayout metadata={metadata}>
   <h1>Blog</h1>
   <ul class="card-grid">
-    {items.map((post) => <PostCard post={post} />)}
+    {posts.map((post) => <PostCard post={post} />)}
   </ul>
-  <Pagination page={page} totalPages={totalPages} />
+  <Pagination page={pagination.page} totalPages={pagination.totalPages} />
 </BaseLayout>
+

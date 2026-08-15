@@ -82,3 +82,40 @@ export function paginatePosts(posts: Post[], page: number, pageSize: number): Pa
   const items = posts.slice(start, start + pageSize);
   return { items, page, totalPages };
 }
+
+export interface PostsQueryOptions {
+  page?: number;
+  perPage?: number;
+}
+
+export interface PostsQueryResult {
+  posts: Post[];
+  pagination: {
+    page: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+/**
+ * Public, paginated entry point over the complete post collection.
+ * `getAllPosts()` still performs the one real (memoized) fetch — this only
+ * slices and reshapes it for callers that want one page plus pagination
+ * info in a single call.
+ */
+export async function getPosts(options: PostsQueryOptions = {}): Promise<PostsQueryResult> {
+  const { page = 1, perPage = BLOG_PAGE_SIZE } = options;
+  const all = await getAllPosts();
+  const { items, totalPages } = paginatePosts(all, page, perPage);
+  return {
+    posts: items,
+    pagination: { page, totalPages, totalItems: all.length },
+  };
+}
+
+/** Looks up one post by slug within the already-fetched, cached collection. Never issues a per-slug fetch. */
+export async function getPostBySlug(slug: string): Promise<Post | undefined> {
+  const all = await getAllPosts();
+  return all.find((post) => post.slug === slug);
+}
+

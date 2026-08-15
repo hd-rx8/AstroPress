@@ -102,3 +102,58 @@ describe('paginatePosts', () => {
     expect(paginatePosts([], 1, 12)).toEqual({ items: [], page: 1, totalPages: 1 });
   });
 });
+
+describe('getPosts', () => {
+  beforeEach(() => {
+    clientGetMock.mockReset();
+    vi.resetModules();
+  });
+
+  it('returns a page of posts with pagination metadata', async () => {
+    clientGetMock.mockResolvedValueOnce({
+      data: [wordpressPostFixture, postWithoutEmbeddedData, postWithEmptyEmbeds],
+      totalPages: 1,
+    });
+
+    const { getPosts } = await import('../../../src/lib/wordpress/posts');
+    const result = await getPosts({ page: 1, perPage: 2 });
+
+    expect(result.posts).toHaveLength(2);
+    expect(result.pagination).toEqual({ page: 1, totalPages: 2, totalItems: 3 });
+  });
+
+  it('defaults to page 1 and BLOG_PAGE_SIZE when no options are given', async () => {
+    clientGetMock.mockResolvedValueOnce({ data: [wordpressPostFixture], totalPages: 1 });
+
+    const { getPosts } = await import('../../../src/lib/wordpress/posts');
+    const result = await getPosts();
+
+    expect(result.pagination.page).toBe(1);
+    expect(result.posts).toHaveLength(1);
+  });
+});
+
+describe('getPostBySlug', () => {
+  beforeEach(() => {
+    clientGetMock.mockReset();
+    vi.resetModules();
+  });
+
+  it('finds a post by slug within the cached collection', async () => {
+    clientGetMock.mockResolvedValueOnce({ data: [wordpressPostFixture], totalPages: 1 });
+
+    const { getPostBySlug } = await import('../../../src/lib/wordpress/posts');
+    const post = await getPostBySlug('hello-world');
+
+    expect(post?.slug).toBe('hello-world');
+  });
+
+  it('returns undefined for an unknown slug', async () => {
+    clientGetMock.mockResolvedValueOnce({ data: [wordpressPostFixture], totalPages: 1 });
+
+    const { getPostBySlug } = await import('../../../src/lib/wordpress/posts');
+    await expect(getPostBySlug('does-not-exist')).resolves.toBeUndefined();
+  });
+});
+
+

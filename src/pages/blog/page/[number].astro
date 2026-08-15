@@ -10,39 +10,38 @@ import PostCard from '../../../components/PostCard.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { buildMetadata } from '../../../lib/seo/metadata';
 import { blogPaginationRoutePages, blogPagePath } from '../../../lib/routes';
-import { BLOG_PAGE_SIZE, getAllPosts, paginatePosts } from '../../../lib/wordpress/posts';
-import type { PaginatedPosts } from '../../../lib/wordpress/posts';
+import { BLOG_PAGE_SIZE, getPosts } from '../../../lib/wordpress';
+import type { PostsQueryResult } from '../../../lib/wordpress';
 
 export async function getStaticPaths() {
-  const posts = await getAllPosts();
-  const { totalPages } = paginatePosts(posts, 1, BLOG_PAGE_SIZE);
+  const first = await getPosts({ page: 1, perPage: BLOG_PAGE_SIZE });
 
-  return blogPaginationRoutePages(totalPages).map((page) => {
-    const paginated = paginatePosts(posts, page, BLOG_PAGE_SIZE);
-    return {
+  return Promise.all(
+    blogPaginationRoutePages(first.pagination.totalPages).map(async (page) => ({
       params: { number: String(page) },
-      props: { paginated },
-    };
-  });
+      props: { result: await getPosts({ page, perPage: BLOG_PAGE_SIZE }) },
+    })),
+  );
 }
 
 export interface Props {
-  paginated: PaginatedPosts;
+  result: PostsQueryResult;
 }
 
-const { paginated } = Astro.props;
-const { items, page, totalPages } = paginated;
+const { result } = Astro.props;
+const { posts, pagination } = result;
 
 const metadata = buildMetadata({
-  title: `Blog — Page ${page}`,
-  path: blogPagePath(page),
+  title: `Blog — Page ${pagination.page}`,
+  path: blogPagePath(pagination.page),
 });
 ---
 
 <BaseLayout metadata={metadata}>
   <h1>Blog</h1>
   <ul class="card-grid">
-    {items.map((post) => <PostCard post={post} />)}
+    {posts.map((post) => <PostCard post={post} />)}
   </ul>
-  <Pagination page={page} totalPages={totalPages} />
+  <Pagination page={pagination.page} totalPages={pagination.totalPages} />
 </BaseLayout>
+
